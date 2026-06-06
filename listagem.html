@@ -1,0 +1,637 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Listagem de Alunos — Sistema de Merenda</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <style>
+    .modal { transition: opacity 0.25s ease; }
+    body.modal-active { overflow: hidden; }
+    @media print {
+      @page { size: A4 portrait; margin: 10mm; }
+      body { margin: 0; padding: 0; background: white; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .no-print { display: none !important; }
+      #batchPrintArea { display: flex !important; flex-wrap: wrap; gap: 4mm; justify-content: flex-start; }
+      .print-only { display: block !important; }
+    }
+    .cracha-cr80 {
+      width: 86mm !important; height: 54mm !important;
+      min-width: 86mm !important; max-width: 86mm !important;
+      min-height: 54mm !important; max-height: 54mm !important;
+      background-color: white; border: 1px solid #94a3b8; border-radius: 8px;
+      padding: 4mm; box-sizing: border-box; display: flex; flex-direction: row;
+      justify-content: space-between; overflow: hidden; position: relative;
+      page-break-inside: avoid;
+    }
+    .nav-button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      padding: 0.5rem 1.25rem;
+      border-radius: 10rem;
+      color: #fff !important;
+      text-transform: uppercase;
+      font-size: 0.7rem;
+      font-weight: 700;
+      letter-spacing: 0.1rem;
+      transition: all 0.3s;
+      position: relative;
+      overflow: hidden;
+      z-index: 1;
+      text-decoration: none;
+      text-align: center;
+      min-width: 110px;
+    }
+    .nav-button:after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: #1e5aa0;
+      z-index: -2;
+    }
+    .nav-button:before {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 0%;
+      height: 100%;
+      background-color: #f9b000;
+      transition: all 0.3s;
+      z-index: -1;
+    }
+    .nav-button:hover:before {
+      width: 100%;
+    }
+  </style>
+</head>
+<body class="bg-gray-50 min-h-screen py-8">
+  <header class="no-print bg-gray-50 border-b border-gray-200 sticky top-0 z-50 py-4 mb-8">
+    <div class="max-w-5xl mx-auto px-4 flex justify-between items-center">
+      <div>
+        <h1 class="text-2xl font-semibold text-gray-800">Alunos Cadastrados</h1>
+      </div>
+      <div class="flex gap-2">
+        <a href="index.html" class="nav-button">
+          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><rect width="5" height="5" x="3" y="3" rx="1"/><rect width="5" height="5" x="16" y="3" rx="1"/><rect width="5" height="5" x="3" y="16" rx="1"/><path d="M21 16h-3a2 2 0 0 0-2 2v3"/><path d="M21 21v.01"/><path d="M12 7v3"/><path d="M7 12h3"/><path d="M12 12h.01"/><path d="M16 12h.01"/><path d="M12 16v.01"/><path d="M16 16v.01"/><path d="M21 12v.01"/><path d="M12 21v.01"/></svg>
+          Leitor QR
+        </a>
+        <a href="dashboard.html" class="nav-button">
+          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><rect width="7" height="9" x="3" y="3" rx="1"/><rect width="7" height="5" x="14" y="3" rx="1"/><rect width="7" height="9" x="14" y="12" rx="1"/><rect width="7" height="5" x="3" y="16" rx="1"/></svg>
+          Dashboard
+        </a>
+        <button id="batchPrintBtn" class="hidden bg-gray-800 text-white px-4 py-2 rounded-lg hover:bg-black transition font-medium text-sm">
+          🖨️ Imprimir Turma Atual
+        </button>
+        <button id="exportarBtn" class="bg-emerald-600 text-white px-4 py-2 rounded-lg hover:bg-emerald-700 transition font-medium text-sm">
+          Exportar CSV
+        </button>
+        <a href="admin.html" class="nav-button">
+          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" x2="19" y1="8" y2="14"/><line x1="16" x2="22" y1="11" y2="11"/></svg>
+          + Novo Aluno
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <div class="max-w-5xl mx-auto px-4">
+
+    <!-- Filtros de Busca -->
+    <section class="mb-6 grid grid-cols-1 md:grid-cols-2 gap-4 no-print">
+      <div class="md:col-span-2">
+        <input id="filtroBusca" type="text" oninput="this.value = this.value.toUpperCase()" placeholder="PESQUISAR POR NOME OU MATRÍCULA..." class="w-full rounded-lg border-gray-300 shadow-sm p-3 text-sm focus:ring-2 focus:ring-indigo-200 border outline-none uppercase" />
+      </div>
+      <div>
+        <select id="filtroCurso" class="w-full rounded-lg border-gray-300 shadow-sm p-3 text-sm focus:ring-2 focus:ring-indigo-200 bg-white border outline-none">
+          <option value="">Todos os Cursos</option>
+        </select>
+      </div>
+      <div>
+        <select id="filtroTurma" disabled class="w-full rounded-lg border-gray-300 shadow-sm p-3 text-sm focus:ring-2 focus:ring-indigo-200 bg-white border outline-none">
+          <option value="">Todas as Turmas</option>
+        </select>
+      </div>
+    </section>
+
+    <!-- Tabela de Alunos -->
+    <main class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden no-print">
+      <div class="overflow-x-auto">
+        <table class="w-full text-left border-collapse">
+          <thead>
+            <tr class="bg-gray-50 border-b border-gray-100">
+              <th class="px-6 py-4 text-xs font-semibold text-gray-500 uppercase">Nome</th>
+              <th class="px-6 py-4 text-xs font-semibold text-gray-500 uppercase">Matrícula</th>
+              <th class="px-6 py-4 text-xs font-semibold text-gray-500 uppercase">Curso</th>
+              <th class="px-6 py-4 text-xs font-semibold text-gray-500 uppercase">Turma</th>
+              <th class="px-6 py-4 text-xs font-semibold text-gray-500 uppercase">Status</th>
+              <th class="px-6 py-4 text-xs font-semibold text-gray-500 uppercase text-right">Ações</th>
+            </tr>
+          </thead>
+          <tbody id="listaAlunos" class="divide-y divide-gray-50">
+            <!-- Linhas inseridas via JS -->
+            <tr>
+              <td colspan="4" class="px-6 py-8 text-center text-gray-400">Carregando alunos...</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </main>
+  </div>
+
+  <!-- Área oculta para geração de impressão em lote -->
+  <div id="batchPrintArea" class="hidden"></div>
+
+  <!-- Modal de QR Code -->
+  <div id="qrModal" class="modal opacity-0 pointer-events-none fixed w-full h-full top-0 left-0 flex items-center justify-center z-50">
+    <div class="modal-overlay absolute w-full h-full bg-gray-900 opacity-50"></div>
+    
+    <div class="modal-container bg-white cracha-cr80 mx-auto rounded-xl shadow-2xl z-50 overflow-hidden relative" id="modalCard">
+      <div class="w-[50mm] h-full flex flex-col justify-between overflow-hidden text-left">
+        <img src="logo.jpeg" class="h-[24mm] w-auto object-contain object-left mb-1">
+        <div class="flex flex-col justify-end gap-[2px]">
+          <span id="modalNome" class="font-bold text-[10px] leading-tight uppercase text-black break-words whitespace-normal line-clamp-2"></span>
+          <span id="modalCurso" class="text-[8px] font-bold leading-tight uppercase text-indigo-700 break-words whitespace-normal line-clamp-2"></span>
+          <span id="modalTurma" class="text-[8px] leading-tight uppercase text-gray-800"></span>
+          <span id="modalMat" class="text-[8px] leading-tight uppercase text-gray-500 mt-1">ID: <span></span></span>
+        </div>
+      </div>
+      <div class="w-[26mm] h-[26mm] flex-shrink-0 flex items-start justify-center">
+        <div id="modalQRContainer" class="w-[26mm] h-[26mm]"></div>
+      </div>
+      <div class="absolute bottom-1 right-1 flex gap-1 no-print">
+        <button onclick="window.print()" class="bg-green-600 text-white rounded px-2 py-1 text-[10px] hover:bg-green-700">Imprimir</button>
+        <button id="downloadQRBtn" class="bg-blue-600 text-white rounded px-2 py-1 text-[10px] hover:bg-blue-700">Baixar</button>
+        <button id="closeModal" class="bg-gray-200 text-gray-700 rounded px-2 py-1 text-[10px] hover:bg-gray-300">Fechar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal de Edição -->
+  <div id="editModal" class="modal opacity-0 pointer-events-none fixed w-full h-full top-0 left-0 flex items-center justify-center z-50">
+    <div class="modal-overlay absolute w-full h-full bg-gray-900 opacity-50"></div>
+    
+    <div class="modal-container bg-white w-full max-w-md mx-auto rounded-2xl shadow-2xl z-50 overflow-y-auto border border-gray-100">
+      <div class="p-8">
+        <h2 class="text-xl font-bold text-gray-900 mb-6">Editar Dados do Aluno</h2>
+        
+        <form id="formEdit" class="space-y-4" onsubmit="return false;">
+          <input type="hidden" id="editId">
+          <div>
+            <label class="block text-sm font-medium text-gray-700">Nome</label>
+            <input id="editNome" type="text" required oninput="this.value = this.value.toUpperCase()" class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm p-3 focus:outline-none focus:ring-2 focus:ring-indigo-200 border uppercase">
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-gray-700">Curso</label>
+            <select id="editCurso" required class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm p-3 focus:outline-none focus:ring-2 focus:ring-indigo-200 bg-white border">
+            </select>
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-gray-700">Turma</label>
+            <select id="editTurma" required class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm p-3 focus:outline-none focus:ring-2 focus:ring-indigo-200 bg-white border">
+            </select>
+          </div>
+
+          <div class="flex gap-2 pt-4">
+            <button type="submit" id="saveEditBtn" class="flex-1 bg-indigo-600 text-white rounded-lg px-4 py-2 text-sm font-medium hover:bg-indigo-700">Salvar Alterações</button>
+            <button type="button" id="closeEditModal" class="flex-1 bg-gray-200 text-gray-700 rounded-lg px-4 py-2 text-sm font-medium hover:bg-gray-300">Cancelar</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
+    import { getFirestore, collection, getDocs, doc, deleteDoc, updateDoc, query, orderBy, getDoc } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyB1wMxVNTcvIyz80arV4YNsKhUZAs7a4Uc",
+      authDomain: "sistema-merenda.firebaseapp.com",
+      projectId: "sistema-merenda",
+      storageBucket: "sistema-merenda.firebasestorage.app",
+      messagingSenderId: "1051054133501",
+      appId: "1:1051054133501:web:83b869d971cc59a403ee94"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    const listaAlunosEl = document.getElementById('listaAlunos');
+    const qrModal = document.getElementById('qrModal');
+    const closeModal = document.getElementById('closeModal');
+    const downloadQRBtn = document.getElementById('downloadQRBtn');
+    const editModal = document.getElementById('editModal');
+    const closeEditModal = document.getElementById('closeEditModal');
+    const formEdit = document.getElementById('formEdit');
+    const editId = document.getElementById('editId');
+    const editNome = document.getElementById('editNome');
+    const editCurso = document.getElementById('editCurso');
+    const editTurma = document.getElementById('editTurma');
+    const exportarBtn = document.getElementById('exportarBtn');
+    const filtroBusca = document.getElementById('filtroBusca');
+    const filtroCurso = document.getElementById('filtroCurso');
+    const filtroTurma = document.getElementById('filtroTurma');
+    const batchPrintBtn = document.getElementById('batchPrintBtn');
+    const batchPrintArea = document.getElementById('batchPrintArea');
+
+    let alunosCache = [];
+    let configCache = { cursosComTurmas: {} };
+
+    // Carregar Configurações
+    async function carregarConfig() {
+      const docRef = doc(db, "configuracoes", "dadosBase");
+      const snap = await getDoc(docRef);
+      if (snap.exists()) {
+        const data = snap.data() || {};
+        configCache.cursosComTurmas = data.cursosComTurmas || {};
+      } else {
+        configCache.cursosComTurmas = {};
+      }
+
+      const cursos = Object.keys(configCache.cursosComTurmas).sort((a, b) => a.localeCompare(b, 'pt-BR'));
+      popularSelect(filtroCurso, cursos, "Todos os Cursos", false);
+      atualizarFiltroTurma();
+      popularSelect(editCurso, cursos, "", false);
+      popularSelect(editTurma, [], "Selecione um curso", true);
+      editCurso.addEventListener('change', () => {
+        const turmas = configCache.cursosComTurmas[editCurso.value] || [];
+        popularSelect(editTurma, turmas, "Selecione uma turma", turmas.length === 0);
+      });
+    }
+
+    function popularSelect(el, items, placeholder, disabled = false) {
+      el.innerHTML = placeholder ? `<option value="">${placeholder}</option>` : '';
+      (items || []).forEach(i => {
+        el.innerHTML += `<option value="${i}">${i}</option>`;
+      });
+      el.disabled = disabled;
+    }
+    
+    // Carregar Alunos do Firestore
+    async function carregarAlunos() {
+      try {
+        const q = query(collection(db, "alunos"), orderBy("nome", "asc"));
+        const snapshot = await getDocs(q);
+
+        alunosCache = snapshot.docs.map(docSnap => ({
+          id: docSnap.id,
+          ...docSnap.data()
+        }));
+
+        filtrarAlunos();
+      } catch (error) {
+        console.error("Erro ao carregar:", error);
+        listaAlunosEl.innerHTML = '<tr><td colspan="4" class="px-6 py-8 text-center text-red-500">Erro ao carregar dados.</td></tr>';
+      }
+    }
+
+    // Função para filtrar e renderizar a tabela
+    function filtrarAlunos() {
+      const termo = filtroBusca.value.toUpperCase();
+      const curso = filtroCurso.value;
+      const turma = filtroTurma.value;
+
+      // Botão de impressão em lote só aparece se houver uma turma selecionada
+      batchPrintBtn.classList.toggle('hidden', !turma);
+
+      const alunosFiltrados = alunosCache.filter(aluno => {
+        const matchTexto = aluno.nome.toUpperCase().includes(termo) || aluno.matricula.includes(termo);
+        const matchCurso = curso === "" || aluno.curso === curso;
+        const matchTurma = turma === "" || aluno.turma === turma;
+        return matchTexto && matchCurso && matchTurma;
+      });
+
+      renderizarTabela(alunosFiltrados);
+    }
+
+    function renderizarTabela(alunos) {
+        if (alunos.length === 0) {
+          listaAlunosEl.innerHTML = '<tr><td colspan="4" class="px-6 py-8 text-center text-gray-400">Nenhum aluno cadastrado.</td></tr>';
+          return;
+        }
+
+        listaAlunosEl.innerHTML = '';
+        const termo = filtroBusca.value.trim();
+
+        alunos.forEach((aluno) => {
+          const id = aluno.id;
+
+          let nomeExibicao = aluno.nome;
+          if (termo) {
+            // Escapa caracteres especiais de regex e cria uma expressão case-insensitive
+            const regex = new RegExp(`(${termo.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
+            nomeExibicao = aluno.nome.replace(regex, '<mark class="bg-yellow-200 rounded-sm">$1</mark>');
+          }
+
+          const tr = document.createElement('tr');
+          tr.className = 'hover:bg-gray-50 transition';
+          tr.innerHTML = `
+            <td class="px-6 py-4 font-medium text-gray-900">${nomeExibicao}</td>
+            <td class="px-6 py-4 text-sm font-mono text-gray-400">${aluno.matricula}</td>
+            <td class="px-6 py-4 text-gray-600">${aluno.curso || '--'}</td>
+            <td class="px-6 py-4 text-gray-600">${aluno.turma || '--'}</td>
+            <td class="px-6 py-4">
+              <button class="btn-status px-2 py-1 rounded text-xs font-bold ${aluno.status === 'ativo' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}" data-id="${id}" data-current="${aluno.status}">
+                ${(aluno.status || 'ativo').toUpperCase()}
+              </button>
+            </td>
+            <td class="px-6 py-4 text-right flex justify-end gap-3">
+              <button class="btn-qr text-indigo-600 font-medium text-sm" data-nome="${aluno.nome}" data-curso="${aluno.curso}" data-turma="${aluno.turma}" data-mat="${aluno.matricula}">QR</button>
+              <button class="btn-edit text-amber-600 font-medium text-sm" data-id="${id}" data-nome="${aluno.nome}" data-curso="${aluno.curso}" data-turma="${aluno.turma}">Editar</button>
+              <button class="btn-del text-red-500 hover:text-red-700 font-medium text-sm" data-id="${id}">
+                Excluir
+              </button>
+            </td>
+          `;
+          listaAlunosEl.appendChild(tr);
+        });
+
+        adicionarEventos();
+    }
+
+    // Listeners para os filtros
+    filtroBusca.addEventListener('input', filtrarAlunos);
+    filtroCurso.addEventListener('change', () => {
+      atualizarFiltroTurma();
+      filtrarAlunos();
+    });
+    filtroTurma.addEventListener('change', filtrarAlunos);
+
+    function atualizarFiltroTurma() {
+      const curso = filtroCurso.value;
+      if (!curso) {
+        popularSelect(filtroTurma, [], "Todas as Turmas", true);
+        return;
+      }
+
+      const turmas = configCache.cursosComTurmas[curso] || [];
+      popularSelect(filtroTurma, turmas, "Todas as Turmas", turmas.length === 0);
+    }
+
+    function adicionarEventos() {
+      // Evento de Exclusão
+      document.querySelectorAll('.btn-del').forEach(btn => {
+        btn.onclick = async (e) => {
+          if (confirm("Deseja realmente excluir este aluno? Esta ação não pode ser desfeita.")) {
+            const id = e.target.getAttribute('data-id');
+            try {
+              await deleteDoc(doc(db, "alunos", id));
+              carregarAlunos();
+            } catch (error) {
+              alert("Erro ao excluir aluno.");
+            }
+          }
+        };
+      });
+
+      // Evento de Status
+      document.querySelectorAll('.btn-status').forEach(btn => {
+        btn.onclick = async (e) => {
+          const id = e.target.getAttribute('data-id');
+          const current = e.target.getAttribute('data-current');
+          const newStatus = current === 'ativo' ? 'inativo' : 'ativo';
+          try {
+            await updateDoc(doc(db, "alunos", id), { status: newStatus });
+            carregarAlunos();
+          } catch (e) { alert("Erro ao mudar status."); }
+        };
+      });
+
+      // Evento de Edição
+      document.querySelectorAll('.btn-edit').forEach(btn => {
+        btn.onclick = (e) => {
+          const id = e.target.getAttribute('data-id');
+          const nome = e.target.getAttribute('data-nome');
+          const curso = e.target.getAttribute('data-curso');
+          const turma = e.target.getAttribute('data-turma');
+          abrirEditModal(id, nome, curso, turma);
+        };
+      });
+
+      // Evento de QR Code
+      document.querySelectorAll('.btn-qr').forEach(btn => {
+        btn.onclick = (e) => {
+          const nome = e.target.getAttribute('data-nome');
+          const curso = e.target.getAttribute('data-curso');
+          const turma = e.target.getAttribute('data-turma');
+          const matricula = e.target.getAttribute('data-mat');
+          abrirModal(nome, curso, turma, matricula);
+        };
+      });
+    }
+
+    function abrirModal(nome, curso, turma, matricula) {
+      document.getElementById('modalNome').textContent = nome;
+      document.getElementById('modalCurso').textContent = curso;
+      document.getElementById('modalTurma').textContent = turma;
+      document.querySelector('#modalMat span').textContent = matricula;
+      
+      // Gerar QR Code com qrcode.js
+      const container = document.getElementById('modalQRContainer');
+      container.innerHTML = "";
+      new QRCode(container, {
+        text: matricula,
+        width: 85,
+        height: 85,
+        correctLevel: QRCode.CorrectLevel.H
+      });
+      
+      qrModal.classList.remove('opacity-0', 'pointer-events-none');
+      document.body.classList.add('modal-active');
+    }
+
+    function fecharModal() {
+      qrModal.classList.add('opacity-0', 'pointer-events-none');
+      document.body.classList.remove('modal-active');
+    }
+
+    function abrirEditModal(id, nome, curso, turma) {
+      editId.value = id;
+      editNome.value = nome;
+      editCurso.value = curso || '';
+      const turmas = configCache.cursosComTurmas[curso] || [];
+      popularSelect(editTurma, turmas, "Selecione uma turma", turmas.length === 0);
+      editTurma.value = turma || '';
+      
+      editModal.classList.remove('opacity-0', 'pointer-events-none');
+      document.body.classList.add('modal-active');
+    }
+
+    function fecharEditModal() {
+      editModal.classList.add('opacity-0', 'pointer-events-none');
+      document.body.classList.remove('modal-active');
+    }
+
+    closeEditModal.onclick = fecharEditModal;
+
+    formEdit.onsubmit = async (e) => {
+      e.preventDefault();
+      const id = editId.value;
+      const nome = editNome.value.trim().toUpperCase();
+      const curso = editCurso.value.toUpperCase();
+      const turma = editTurma.value.toUpperCase();
+      
+      if (!nome || !curso || !turma) return;
+
+      const saveBtn = document.getElementById('saveEditBtn');
+      saveBtn.disabled = true;
+      saveBtn.textContent = "Salvando...";
+
+      try {
+        await updateDoc(doc(db, "alunos", id), { nome, curso, turma });
+        fecharEditModal();
+        carregarAlunos();
+      } catch (error) {
+        console.error("Erro ao atualizar:", error);
+        alert("Erro ao salvar alterações.");
+      } finally {
+        saveBtn.disabled = false;
+        saveBtn.textContent = "Salvar Alterações";
+      }
+    };
+
+    downloadQRBtn.onclick = () => {
+      const container = document.getElementById('modalQRContainer');
+      const canvas = container.querySelector('canvas');
+      if (!canvas) return;
+
+      const { jsPDF } = window.jspdf;
+      const pdf = new jsPDF({ orientation: 'landscape', unit: 'mm', format: [86, 54] });
+
+      const nome = document.getElementById('modalNome').textContent.trim();
+      const curso = document.getElementById('modalCurso').textContent.trim();
+      const turma = document.getElementById('modalTurma').textContent.trim();
+      const matricula = document.querySelector('#modalMat span').textContent.trim();
+      const qrDataUrl = canvas.toDataURL("image/png");
+
+      // Borda opcional
+      pdf.setDrawColor(203, 213, 225);
+      pdf.setLineWidth(0.1);
+      pdf.roundedRect(0, 0, 86, 54, 2, 2);
+
+      // Logo (Margem 4mm)
+      pdf.addImage('logo.jpeg', 'JPEG', 4, 4, 24, 24);
+
+      // QR Code (Posicionado à direita: 56mm de X para 26mm de largura)
+      pdf.addImage(qrDataUrl, 'PNG', 56, 4, 26, 26);
+
+      // Texto com trava de 50mm de largura
+      let currentY = 31;
+      pdf.setFont("helvetica", "bold");
+      pdf.setFontSize(10);
+      pdf.setTextColor(0, 0, 0);
+      const nomeLines = pdf.splitTextToSize(nome.toUpperCase(), 50);
+      pdf.text(nomeLines, 4, currentY);
+      currentY += (nomeLines.length * 4);
+
+      pdf.setFontSize(8);
+      pdf.setTextColor(67, 56, 202);
+      const cursoLines = pdf.splitTextToSize(curso.toUpperCase(), 50);
+      pdf.text(cursoLines, 4, currentY);
+      currentY += (cursoLines.length * 3);
+
+      pdf.setFont("helvetica", "normal");
+      pdf.setTextColor(31, 41, 55);
+      pdf.text(turma.toUpperCase(), 4, currentY);
+      currentY += 4;
+
+      pdf.setTextColor(107, 114, 128);
+      pdf.text("ID: " + matricula, 4, currentY);
+
+      const fileName = `${nome.toUpperCase()} - ${matricula}.pdf`;
+      pdf.save(fileName);
+    };
+
+    closeModal.onclick = fecharModal;
+    window.onclick = (event) => {
+      if (event.target == qrModal.querySelector('.modal-overlay')) fecharModal();
+      if (event.target == editModal.querySelector('.modal-overlay')) fecharEditModal();
+    };
+
+    // --- IMPRESSÃO EM LOTE ---
+    batchPrintBtn.onclick = async () => {
+      const turmaSel = filtroTurma.value;
+      const alunosParaImprimir = alunosCache.filter(a => a.turma === turmaSel && a.status === 'ativo');
+      
+      if (alunosParaImprimir.length === 0) return alert("Nenhum aluno ativo nesta turma.");
+
+      batchPrintArea.innerHTML = "";
+      
+      for (const aluno of alunosParaImprimir) {
+        const card = document.createElement('div');
+        card.className = "cracha-cr80";
+        card.innerHTML = `
+          <div class="w-[50mm] h-full flex flex-col justify-between overflow-hidden text-left">
+            <img src="logo.jpeg" class="h-[24mm] w-auto object-contain object-left mb-1">
+            <div class="flex flex-col justify-end gap-[2px]">
+              <span class="font-bold text-[10px] leading-tight uppercase text-black break-words whitespace-normal line-clamp-2">${aluno.nome}</span>
+              <span class="text-[8px] font-bold leading-tight uppercase text-indigo-700 break-words whitespace-normal line-clamp-2">${aluno.curso}</span>
+              <span class="text-[8px] leading-tight uppercase text-gray-800">${aluno.turma}</span>
+              <span class="text-[8px] leading-tight uppercase text-gray-500 mt-1">ID: ${aluno.matricula}</span>
+            </div>
+          </div>
+          <div class="w-[26mm] h-[26mm] flex-shrink-0 flex items-start justify-center">
+            <div id="batch-qr-${aluno.matricula}" class="w-[26mm] h-[26mm]"></div>
+          </div>
+        `;
+        batchPrintArea.appendChild(card);
+
+        new QRCode(document.getElementById(`batch-qr-${aluno.matricula}`), {
+          text: aluno.matricula,
+          width: 85,
+          height: 85
+        });
+      }
+
+      setTimeout(() => {
+        window.print();
+        batchPrintArea.innerHTML = "";
+      }, 500);
+    };
+
+    // Função para exportar a lista para CSV (compatível com Excel)
+    async function exportarCSV() {
+      try {
+        const q = query(collection(db, "alunos"), orderBy("nome", "asc"));
+        const snapshot = await getDocs(q);
+        
+        if (snapshot.empty) {
+          alert("Não há alunos para exportar.");
+          return;
+        }
+
+        let csv = "\uFEFFNome,Curso,Turma,Matrícula,Status\n";
+        snapshot.forEach((docSnap) => {
+          const aluno = docSnap.data();
+          csv += `"${aluno.nome}","${aluno.curso}","${aluno.turma}","${aluno.matricula}","${aluno.status}"\n`;
+        });
+
+        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement("a");
+        link.href = URL.createObjectURL(blob);
+        link.setAttribute("download", "lista_alunos_merenda.csv");
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+      } catch (error) {
+        console.error("Erro ao exportar:", error);
+      }
+    }
+
+    exportarBtn.onclick = exportarCSV;
+
+    // Inicializar
+    carregarConfig();
+    carregarAlunos();
+  </script>
+</body>
+</html>

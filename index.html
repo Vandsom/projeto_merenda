@@ -1,0 +1,342 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Controle de Merenda — Leitor QR</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    .alert-success { background-color: #ecfdf5; color: #065f46; border: 2px solid #10b981; }
+    .alert-error { background-color: #fee2e2; color: #991B1B; border: 2px solid #ef4444; }
+    .alert-loading { background-color: #f3f4f6; color: #374151; border: 2px solid #9ca3af; }
+    .big-touch { padding: 0.9rem 1.25rem; font-size: 1.125rem; }
+    
+    #reader { 
+      min-height: 220px; 
+      border-radius: 0.75rem; 
+      overflow: hidden; 
+      background: linear-gradient(135deg, #f8fafc, #f1f5f9); 
+      display: flex; 
+      align-items: center; 
+      justify-content: center; 
+      border: 2px dashed rgba(148, 163, 184, 0.4);
+    }
+
+    #reader video {
+      width: 100% !important;
+      height: 100% !important;
+      object-fit: cover !important;
+    }
+
+    #reader canvas {
+      display: none !important;
+    }
+
+    .nav-button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      padding: 0.5rem 1.25rem;
+      border-radius: 10rem;
+      color: #fff !important;
+      text-transform: uppercase;
+      font-size: 0.7rem;
+      font-weight: 700;
+      letter-spacing: 0.1rem;
+      transition: all 0.3s;
+      position: relative;
+      overflow: hidden;
+      z-index: 1;
+      text-decoration: none;
+      text-align: center;
+      min-width: 110px;
+    }
+    .nav-button:after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: #1e5aa0;
+      z-index: -2;
+    }
+    .nav-button:before {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 0%;
+      height: 100%;
+      background-color: #f9b000;
+      transition: all 0.3s;
+      z-index: -1;
+    }
+    .nav-button:hover:before {
+      width: 100%;
+    }
+  </style>
+</head>
+<body class="bg-gray-50 text-gray-800 min-h-screen flex flex-col">
+
+  <header class="bg-white shadow-sm sticky top-0 z-50">
+    <div class="max-w-4xl mx-auto px-4 py-4 flex flex-col sm:flex-row justify-between items-center gap-4">
+      <div class="flex items-center gap-4">
+        <img src="logo.jpeg" alt="Logo Escola" class="h-12 w-auto object-contain">
+        <div>
+          <h1 class="text-xl sm:text-2xl font-semibold">Controle de Merenda Escolar</h1>
+          <p class="text-xs sm:text-sm text-gray-500 mt-1">Leia o QR Code ou introduza a matrícula</p>
+        </div>
+      </div>
+      <nav class="flex gap-2">
+        <a href="listagem.html" class="nav-button">
+          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="8" x2="21" y1="6" y2="6"/><line x1="8" x2="21" y1="12" y2="12"/><line x1="8" x2="21" y1="18" y2="18"/><line x1="3" x2="3.01" y1="6" y2="6"/><line x1="3" x2="3.01" y1="12" y2="12"/><line x1="3" x2="3.01" y1="18" y2="18"/></svg>
+          Listagem
+        </a>
+        <a href="dashboard.html" class="nav-button">
+          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><rect width="7" height="9" x="3" y="3" rx="1"/><rect width="7" height="5" x="14" y="3" rx="1"/><rect width="7" height="9" x="14" y="12" rx="1"/><rect width="7" height="5" x="3" y="16" rx="1"/></svg>
+          Dashboard
+        </a>
+        <a href="admin.html" class="nav-button">
+          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" x2="19" y1="8" y2="14"/><line x1="16" x2="22" y1="11" y2="11"/></svg>
+          Cadastrar
+        </a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="flex-1 flex items-center justify-center py-8 px-4">
+    <div class="w-full max-w-xl">
+      <div class="bg-white rounded-2xl shadow-lg p-4 sm:p-6">
+        <div class="flex flex-col sm:flex-row sm:gap-6">
+          <!-- Leitor de QR Code -->
+          <div class="flex-1">
+            <label class="text-sm font-medium text-gray-700 mb-2 block">Leitor de QR Code</label>
+            <div id="reader" class="rounded-xl"></div>
+          </div>
+
+          <!-- Controles Manuais -->
+          <div class="w-full sm:w-80 mt-4 sm:mt-0 flex flex-col">
+            <label class="text-sm font-medium text-gray-700 mb-2">Matrícula (digitar)</label>
+            <div class="flex gap-2 mb-4">
+              <input 
+                id="matriculaInput" 
+                type="text" 
+                inputmode="numeric" 
+                pattern="[0-9]*" 
+                placeholder="Ex: 123456"
+                class="flex-1 border border-gray-300 rounded-xl px-4 py-3 big-touch focus:outline-none focus:ring-2 focus:ring-indigo-300 focus:border-transparent"
+              />
+              <button 
+                id="confirmBtn" 
+                class="bg-indigo-600 text-white rounded-xl px-5 py-3 big-touch hover:bg-indigo-700 active:bg-indigo-800 focus:outline-none focus:ring-2 focus:ring-indigo-300 transition"
+              >
+                Confirmar
+              </button>
+            </div>
+
+            <div class="mt-2">
+              <div 
+                id="status" 
+                class="hidden rounded-lg border px-4 py-3 text-center font-medium transition-all" 
+                role="status"
+              ></div>
+            </div>
+
+            <div class="mt-auto pt-4 text-xs text-gray-500">
+              ℹ️ Permita o acesso à câmera quando solicitado
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <footer class="text-center text-xs text-gray-400 py-4">&copy; 2026 Escola — Sistema de Controle de Merenda</footer>
+
+  <!-- Biblioteca html5-qrcode via Cloudflare (cdnjs) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.8/html5-qrcode.min.js"></script>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
+    import { getFirestore, collection, query, where, getDocs, addDoc, serverTimestamp, limit } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
+
+    // Configuração do Firebase (Preencha os dados abaixo)
+    const firebaseConfig = {
+      apiKey: "",
+      authDomain: "",
+      projectId: "",
+      storageBucket: "",
+      messagingSenderId: "",
+      appId: ""
+    };
+
+    // Inicializar Firebase
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    if (location.protocol === "file:") {
+      alert("Abra o projeto usando Live Server ou localhost. A câmera não funciona corretamente em arquivos locais.");
+    }
+
+    // ===== Referências de Elementos =====
+    const statusEl = document.getElementById('status');
+    const confirmBtn = document.getElementById('confirmBtn');
+    const matriculaInput = document.getElementById('matriculaInput');
+    const readerId = 'reader';
+
+    // ===== Estado Global =====
+    let scanningPaused = false;
+    let scannerAtivo = false;
+    let html5QrCode = null;
+    let audioContext = null;
+    let isScannerStarting = false;
+
+    // ===== Funções de UI =====
+    function showStatus(type, message) {
+      statusEl.className = 'rounded-lg border px-4 py-3 text-center font-medium';
+      statusEl.classList.remove('hidden');
+      statusEl.textContent = message;
+      statusEl.classList.remove('alert-success', 'alert-error', 'alert-loading');
+      if (type === 'sucesso') statusEl.classList.add('alert-success');
+      else if (type === 'erro') statusEl.classList.add('alert-error');
+      else if (type === 'carregando') statusEl.classList.add('alert-loading');
+    }
+
+    function clearStatus() {
+      statusEl.classList.add('hidden');
+      statusEl.textContent = '';
+    }
+
+    // ===== Web Audio API para Bipes =====
+    function playBeep(success = true) {
+      try {
+        if (!audioContext) audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        if (audioContext.state === 'suspended') audioContext.resume();
+        const oscillator = audioContext.createOscillator();
+        const gain = audioContext.createGain();
+        oscillator.type = 'sine';
+        oscillator.frequency.value = success ? 1000 : 200; // Tom grave para erro
+        gain.gain.value = 0.08;
+        oscillator.connect(gain);
+        gain.connect(audioContext.destination);
+        oscillator.start();
+        setTimeout(() => oscillator.stop(), success ? 180 : 250);
+      } catch (e) { console.warn('Falha ao tocar beep:', e); }
+    }
+
+    // ===== Lógica Principal (Firestore) =====
+    async function verificarAcesso(matricula) {
+      if (!matricula || matricula.trim() === '' || scanningPaused) {
+        showStatus('erro', 'Matrícula vazia');
+        return;
+      }
+
+      scanningPaused = true;
+      showStatus('carregando', 'Verificando...');
+
+      try {
+        const now = new Date();
+        const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+
+        // 1. Verifica se já existe registro hoje
+        const qRegistro = query(
+          collection(db, "registros"),
+          where("matricula", "==", matricula),
+          where("data", "==", todayStr),
+          limit(1)
+        );
+        const snapshotRegistro = await getDocs(qRegistro);
+
+        if (!snapshotRegistro.empty) {
+          showStatus('erro', '✗ Refeição já realizada');
+          playBeep(false);
+        } else {
+          // 2. Busca o nome do aluno
+          const qAluno = query(
+            collection(db, "alunos"),
+            where("matricula", "==", matricula),
+            limit(1)
+          );
+          const snapshotAluno = await getDocs(qAluno);
+
+          if (snapshotAluno.empty) {
+            showStatus('erro', '✗ Aluno não encontrado');
+            playBeep(false);
+          } else {
+            const alunoData = snapshotAluno.docs[0].data();
+            
+            // 3. Grava o novo registro de refeição
+            await addDoc(collection(db, "registros"), {
+              matricula: matricula,
+              data: todayStr,
+              timestamp: serverTimestamp()
+            });
+
+            showStatus('sucesso', '✓ Liberado — ' + (alunoData.nome || 'Aluno'));
+            playBeep(true);
+            matriculaInput.value = '';
+          }
+        }
+      } catch (erro) {
+        console.error('Erro ao processar:', erro);
+        showStatus('erro', '✗ Erro de banco de dados');
+        playBeep(false);
+      } finally {
+        setTimeout(() => { // Pausa de 3 segundos antes de permitir nova leitura
+          clearStatus();
+          scanningPaused = false;
+        }, 3000);
+      }
+    }
+
+    // ===== Inicialização do Scanner =====
+    async function initializeScanner() {
+      if (isScannerStarting || scannerAtivo) return;
+      isScannerStarting = true;
+      try {
+        if (html5QrCode) {
+          try { if (scannerAtivo) await html5QrCode.stop(); await html5QrCode.clear(); } catch (e) {}
+          html5QrCode = null;
+          scannerAtivo = false;
+        }
+        html5QrCode = new Html5Qrcode(readerId);
+        
+        const config = { fps: 15, qrbox: { width: 220, height: 220 }, aspectRatio: 1.0 };
+
+        await html5QrCode.start(
+          { facingMode: "environment" }, // Força a câmara traseira
+          config,
+          (decodedText) => { if (!scanningPaused) verificarAcesso(decodedText); },
+          () => {}
+        );
+        scannerAtivo = true;
+        document.querySelectorAll("#reader canvas").forEach((c, i) => { if (i > 0) c.remove(); });
+      } catch (err) {
+        const errorMap = { 'NotAllowedError': 'Permissão negada.', 'NotFoundError': 'Câmera não encontrada.' };
+        showStatus('erro', '✗ ' + (errorMap[err.name] || 'Erro ao carregar câmera.'));
+      } finally { isScannerStarting = false; }
+    }
+
+    // ===== Event Listeners =====
+    confirmBtn.addEventListener('click', (e) => { 
+      e.preventDefault(); 
+      verificarAcesso(matriculaInput.value.trim()); 
+    });
+    matriculaInput.addEventListener('keypress', (e) => { 
+      if (e.key === 'Enter') { 
+        e.preventDefault(); 
+        verificarAcesso(matriculaInput.value.trim()); 
+      } 
+    });
+    matriculaInput.addEventListener('input', () => clearStatus());
+
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', () => initializeScanner());
+    } else {
+      initializeScanner();
+    }
+  </script>
+</body>
+</html>
