@@ -3,8 +3,16 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Painel Administrativo — Gerar QR Codes</title>
+  <title>CETIPass — Cadastro</title>
   <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = { darkMode: 'class' }
+    if (localStorage.getItem('theme') === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+  </script>
   <link rel="preconnect" href="https://cdnjs.cloudflare.com">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
@@ -84,157 +92,233 @@
     @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
   </style>
 </head>
-<body class="bg-gray-50 min-h-screen">
-  <header class="no-print bg-white border-b border-gray-200 sticky top-0 z-50 py-3 sm:py-4 shadow-md">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 flex justify-between items-center">
-      <div class="flex items-center gap-2 sm:gap-4">
-        <img src="logo.jpeg" alt="Logo Escola" class="h-10 sm:h-14 w-auto object-contain">
-        <div>
-          <h1 class="text-lg sm:text-2xl font-extrabold text-gray-900 leading-tight">Painel Administrativo</h1>
-          <p class="text-[10px] sm:text-sm font-medium text-gray-500">Gestão de Carteirinhas</p>
-        </div>
+<body class="bg-gray-50 dark:bg-slate-950 min-h-screen text-gray-800 dark:text-gray-200 flex flex-col md:flex-row transition-colors duration-300">
+  
+  <!-- Menu Lateral -->
+  <aside class="no-print w-full md:w-64 bg-white dark:bg-slate-900 border-r border-gray-200 dark:border-slate-800 flex-shrink-0 flex flex-col h-auto md:h-screen sticky top-0">
+    <div class="p-6 border-b border-gray-100 flex items-center gap-3">
+      <img src="logo.png" alt="Logo" class="h-16 w-auto">
+      <div>
+        <h2 class="font-bold text-gray-900 dark:text-white leading-tight">CETIPass</h2>
+        <p class="text-[10px] text-gray-400 uppercase tracking-widest font-bold">Gestão de Acesso</p>
+        <div id="userNameDisplay" class="text-[10px] text-indigo-600 dark:text-indigo-400 font-bold mt-1 truncate max-w-[120px]"></div>
       </div>
-      <nav class="flex items-center gap-3 sm:gap-8">
-        <a href="dashboard.html" class="text-sm sm:text-base font-bold text-gray-700 hover:text-indigo-600 transition-colors flex items-center gap-1 sm:gap-2">
-          <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 sm:w-5 sm:h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
-          <span>Voltar<span class="hidden sm:inline"> para o Dashboard</span></span>
-        </a>
-        <button id="openConfigBtn" class="p-2 sm:p-3 text-gray-500 hover:text-indigo-600 hover:bg-indigo-50 rounded-xl transition-all border border-gray-100 shadow-sm">
-          <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 sm:w-7 sm:h-7" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>
-        </button>
-      </nav>
     </div>
-  </header>
+    
+    <nav class="flex-1 p-4 space-y-1">
+      <a href="dashboard.html" class="flex items-center gap-3 p-3 rounded-xl text-gray-600 dark:text-slate-400 hover:bg-indigo-50 dark:hover:bg-slate-800 hover:text-indigo-600 dark:hover:text-indigo-400 hover:translate-x-1 hover:scale-[1.02] transition-all duration-300 ease-in-out font-medium">
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="7" height="9" x="3" y="3" rx="1"/><rect width="7" height="5" x="14" y="3" rx="1"/><rect width="7" height="9" x="14" y="12" rx="1"/><rect width="7" height="5" x="3" y="16" rx="1"/></svg>
+        Dashboard
+      </a>
+      <a href="leitor.html" class="flex items-center gap-3 p-3 rounded-xl text-gray-600 dark:text-slate-400 hover:bg-indigo-50 dark:hover:bg-slate-800 hover:text-indigo-600 dark:hover:text-indigo-400 hover:translate-x-1 hover:scale-[1.02] transition-all duration-300 ease-in-out font-medium">
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="5" height="5" x="3" y="3" rx="1"/><rect width="5" height="5" x="16" y="3" rx="1"/><rect width="5" height="5" x="3" y="16" rx="1"/><path d="M21 16h-3a2 2 0 0 0-2 2v3"/><path d="M21 21v.01"/><path d="M12 7v3"/><path d="M7 12h3"/><path d="M12 12h.01"/><path d="M16 12h.01"/><path d="M12 16v.01"/><path d="M16 16v.01"/><path d="M21 12v.01"/><path d="M12 21v.01"/></svg>
+        Leitor QR
+      </a>
+      <a href="listagem.html" class="flex items-center gap-3 p-3 rounded-xl text-gray-600 dark:text-slate-400 hover:bg-indigo-50 dark:hover:bg-slate-800 hover:text-indigo-600 dark:hover:text-indigo-400 hover:translate-x-1 hover:scale-[1.02] transition-all duration-300 ease-in-out font-medium">
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="8" x2="21" y1="6" y2="6"/><line x1="8" x2="21" y1="12" y2="12"/><line x1="8" x2="21" y1="18" y2="18"/><line x1="3" x2="3.01" y1="6" y2="6"/><line x1="3" x2="3.01" y1="12" y2="12"/><line x1="3" x2="3.01" y1="18" y2="18"/></svg>
+        Listagem
+      </a>
+      <a href="imprimir.html" class="flex items-center gap-3 p-3 rounded-xl text-gray-600 dark:text-slate-400 hover:bg-indigo-50 dark:hover:bg-slate-800 hover:text-indigo-600 dark:hover:text-indigo-400 hover:translate-x-1 hover:scale-[1.02] transition-all duration-300 ease-in-out font-medium">
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><path d="M6 9V4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v5"/><rect x="6" y="14" width="12" height="8" rx="2"/></svg>
+        Imprimir Carteiras
+      </a>
+      <button id="navSolicitacoes" onclick="toggleAccessView()" class="w-full flex items-center gap-3 p-3 rounded-xl text-gray-600 dark:text-slate-400 hover:bg-indigo-50 dark:hover:bg-slate-800 transition-all font-medium">
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        Solicitações de Acesso
+        <span id="badgeSolicitacoes" class="hidden bg-red-500 text-white text-[10px] px-1.5 py-0.5 rounded-full ml-auto">0</span>
+      </button>
+    </nav>
 
-  <main class="max-w-2xl mx-auto sm:px-4 py-8 sm:py-12">
-    <!-- Reimprimir / Pesquisar -->
-    <section class="mb-8 px-4 sm:px-0 no-print">
-      <div class="relative group">
-        <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-          <svg class="h-5 w-5 text-gray-400 group-focus-within:text-indigo-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
-        </div>
-        <input id="searchQuery" type="text" oninput="this.value = this.value.toUpperCase()" class="block w-full pl-11 pr-32 py-4 bg-white border border-gray-200 rounded-2xl leading-5 shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm uppercase transition-all" placeholder="PESQUISAR POR NOME OU MATRÍCULA PARA REIMPRIMIR">
-        <div class="absolute inset-y-0 right-0 flex items-center pr-2">
-          <button id="searchBtn" class="bg-gray-900 text-white px-6 py-2 rounded-xl text-sm font-bold hover:bg-black transition-all">Buscar</button>
-        </div>
-      </div>
-    </section>
+    <div class="p-4 border-t border-gray-100">
+      <button id="themeToggle" class="w-full flex items-center gap-3 p-3 rounded-xl text-gray-500 dark:text-slate-400 hover:bg-gray-50 dark:hover:bg-slate-800 transition-all font-medium">
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="dark:hidden"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="hidden dark:block"><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="M4.93 4.93l1.41 1.41"/><path d="M17.66 17.66l1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="M6.34 17.66l-1.41 1.41"/><path d="M19.07 4.93l-1.41 1.41"/></svg>
+        Alternar Tema
+      </button>
+      <button id="openConfigBtn" class="w-full flex items-center gap-3 p-3 rounded-xl text-gray-500 hover:bg-gray-50 transition-all font-medium">
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>
+        Configurações
+      </button>
+      <button id="logoutBtn" class="w-full flex items-center gap-3 p-3 rounded-xl text-red-500 hover:bg-red-50 transition-all font-medium">
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" x2="9" y1="12" y2="12"/></svg>
+        Sair
+      </button>
+    </div>
+  </aside>
 
-    <!-- Formulário de Cadastro -->
-    <section class="bg-white sm:rounded-2xl p-5 sm:p-8 shadow-lg border-y sm:border border-gray-100 no-print">
-      <div class="flex items-center gap-3 mb-8">
-        <div class="p-2 bg-indigo-50 rounded-lg">
-          <svg class="w-6 h-6 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"/></svg>
+  <main class="flex-1 p-4 md:p-12 overflow-y-auto h-screen flex flex-col">
+    <div class="max-w-3xl mx-auto">
+      <!-- Seção de Aprovação de Usuários -->
+      <section id="accessManagementSection" class="hidden bg-white dark:bg-slate-900 rounded-3xl p-6 md:p-10 shadow-xl border border-gray-100 dark:border-slate-800">
+        <h2 class="text-xl font-bold mb-6">Solicitações Pendentes</h2>
+        <div class="overflow-x-auto">
+          <table class="w-full text-left">
+            <thead class="bg-gray-50 dark:bg-slate-800 text-xs font-bold text-gray-500 uppercase">
+              <tr>
+                <th class="px-6 py-4">Nome</th>
+                <th class="px-6 py-4">E-mail</th>
+                <th class="px-6 py-4 text-right">Ações</th>
+              </tr>
+            </thead>
+            <tbody id="listaPendentes">
+              <!-- Injetado via JS -->
+            </tbody>
+          </table>
         </div>
-        <h2 class="text-xl font-bold text-gray-800">Cadastrar Novo Aluno</h2>
+      </section>
+
+      <!-- Título Móvel (Apenas celular) -->
+      <div class="md:hidden flex items-center gap-3 mb-6">
+        <img src="logo.png" class="h-8">
+        <h1 class="text-xl font-bold">Cadastro de Alunos</h1>
       </div>
+
+      <!-- Reimprimir / Pesquisar -->
+      <section class="mb-10 no-print">
+        <div class="relative group">
+          <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+            <svg class="h-5 w-5 text-gray-400 group-focus-within:text-indigo-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+          </div>
+          <input id="searchQuery" type="text" oninput="this.value = this.value.toUpperCase()" class="block w-full pl-11 pr-32 py-4 bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 rounded-2xl leading-5 shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm uppercase transition-all" placeholder="PESQUISAR POR NOME OU MATRÍCULA PARA REIMPRIMIR">
+          <div class="absolute inset-y-0 right-0 flex items-center pr-2">
+            <button id="searchBtn" class="bg-gray-900 text-white px-6 py-2 rounded-xl text-sm font-bold hover:bg-black transition-all">Buscar</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- Formulário de Cadastro -->
+      <section class="bg-white dark:bg-slate-900 rounded-3xl p-6 md:p-10 shadow-xl border border-gray-100 dark:border-slate-800 no-print">
+        <div class="flex items-center gap-3 mb-8">
+          <div class="p-2 bg-indigo-50 rounded-lg">
+            <svg class="w-6 h-6 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"/></svg>
+          </div>
+          <h2 class="text-xl font-bold text-gray-800 dark:text-white">Novo Cadastro</h2>
+        </div>
+        
+        <form id="formAluno" class="space-y-6" onsubmit="return false;">
+          <!-- Nome Completo -->
+          <div class="space-y-1">
+            <label class="text-sm font-semibold text-gray-700 dark:text-slate-300">Nome do Aluno</label>
+            <input id="nome" type="text" required oninput="this.value = this.value.toUpperCase()" class="w-full rounded-xl border-gray-200 dark:border-slate-700 bg-gray-50/50 dark:bg-slate-800/50 p-4 focus:bg-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none border transition-all uppercase text-sm" placeholder="DIGITE O NOME COMPLETO">
+            <p id="nomeWarning" class="text-xs text-red-500 mt-1 hidden font-medium">⚠️ Nome já consta na base de dados.</p>
+          </div>
+
+          <!-- Grid Curso e Turma -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div class="space-y-1">
+              <label class="text-sm font-semibold text-gray-700 dark:text-slate-300">Curso</label>
+              <select id="curso" required class="w-full rounded-xl border-gray-200 dark:border-slate-700 bg-gray-50/50 dark:bg-slate-800/50 p-4 focus:bg-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none border transition-all text-sm">
+                <option value="">Selecione...</option>
+              </select>
+            </div>
+            <div class="space-y-1">
+              <label class="text-sm font-semibold text-gray-700 dark:text-slate-300">Turma</label>
+              <select id="turma" required class="w-full rounded-xl border-gray-200 dark:border-slate-700 bg-gray-50/50 dark:bg-slate-800/50 p-4 focus:bg-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none border transition-all text-sm">
+                <option value="">Selecione...</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Matrícula -->
+          <div class="space-y-1">
+            <label class="text-sm font-semibold text-gray-700 dark:text-slate-300">Matrícula de Identificação</label>
+            <div class="flex gap-2">
+              <input id="matricula" type="text" readonly class="flex-1 rounded-xl border-gray-200 dark:border-slate-700 bg-gray-100 dark:bg-slate-800 p-4 font-mono font-bold text-gray-600 dark:text-slate-400 border text-sm" placeholder="0000000">
+              <button id="refreshIdBtn" type="button" title="Gerar outro ID" class="p-4 bg-gray-100 dark:bg-slate-800 text-gray-500 hover:bg-gray-200 dark:hover:bg-slate-700 rounded-xl transition-all">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+              </button>
+            </div>
+          </div>
+
+          <!-- Ações do Formulário -->
+          <div class="flex flex-col-reverse sm:flex-row items-center justify-between pt-6 border-t border-gray-100 dark:border-slate-700 gap-4">
+            <button id="limparBtn" type="button" class="text-gray-400 font-bold hover:text-gray-600 dark:hover:text-gray-300 transition-colors uppercase text-xs tracking-widest">Limpar</button>
+            <button id="gerarBtn" class="w-full sm:w-auto bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-4 px-8 rounded-xl shadow-lg shadow-indigo-100 transition-all flex items-center justify-center gap-2">
+              <span>Cadastrar Aluno</span>
+            </button>
+          </div>
+        </form>
+      </section>
+
+      <!-- Preview da Carteirinha -->
+      <section id="previewSection" class="mt-12 flex flex-col items-center hidden">
+        <p class="text-xs font-bold text-gray-400 uppercase tracking-[0.2em] mb-4">Resultado da Geração</p>
+        <div id="cardWrapper" class="cracha-cr80 shadow-2xl relative">
+            <div class="w-[50mm] h-full flex flex-col justify-between overflow-hidden">
+              <img src="logo.png" class="h-[24mm] w-auto object-contain object-left mb-1">
+              <div class="flex flex-col justify-end gap-[2px]">
+                <span id="cardNome" class="font-bold text-[10px] leading-tight uppercase text-black break-words whitespace-normal line-clamp-2"></span>
+                <span id="cardCurso" class="text-[8px] font-bold leading-tight uppercase text-indigo-700 break-words whitespace-normal line-clamp-2"></span>
+                <span id="cardTurma" class="text-[8px] leading-tight uppercase text-gray-800"></span>
+                <span id="cardMat" class="text-[8px] leading-tight uppercase text-gray-500 mt-1">ID: <span id="cardMatVal"></span></span>
+              </div>
+            </div>
+            <div class="w-[26mm] h-[26mm] flex-shrink-0 flex items-start justify-center">
+              <div id="qrcodeContainer" class="w-[26mm] h-[26mm]"></div>
+            </div>
+            <div class="absolute bottom-1 right-1 flex gap-1 no-print">
+              <button id="imprimirBtn" class="bg-green-600 text-white rounded px-2 py-1 text-[10px] hover:bg-green-700">Imprimir</button>
+              <button id="downloadBtn" class="bg-blue-600 text-white rounded px-2 py-1 text-[10px] hover:bg-blue-700">Baixar</button>
+            </div>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <!-- Modal de Configurações do Sistema -->
+  <div id="configModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50 transition-modal opacity-0">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-3xl max-h-[90vh] overflow-y-auto m-4 flex flex-col gap-6 p-6">
       
-      <form id="formAluno" class="space-y-6" onsubmit="return false;">
-        <!-- Nome Completo -->
-        <div class="space-y-1">
-          <label class="text-sm font-semibold text-gray-700">Nome do Aluno</label>
-          <input id="nome" type="text" required oninput="this.value = this.value.toUpperCase()" class="w-full rounded-xl border-gray-200 bg-gray-50/50 p-4 focus:bg-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none border transition-all uppercase text-sm" placeholder="DIGITE O NOME COMPLETO">
-          <p id="nomeWarning" class="text-xs text-red-500 mt-1 hidden font-medium">⚠️ Nome já consta na base de dados.</p>
-        </div>
+      <div class="flex justify-between items-center border-b pb-3 sticky top-0 bg-white z-10">
+        <h2 class="text-xl font-bold text-gray-800">Configurações do Sistema</h2>
+        <button id="closeConfigBtn" class="text-gray-500 hover:text-red-500 transition-colors p-2 rounded-full hover:bg-gray-100">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+        </button>
+      </div>
 
-        <!-- Grid Curso e Turma -->
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div class="space-y-1">
-            <label class="text-sm font-semibold text-gray-700">Curso</label>
-            <select id="curso" required class="w-full rounded-xl border-gray-200 bg-gray-50/50 p-4 focus:bg-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none border transition-all text-sm">
-              <option value="">Selecione...</option>
-            </select>
-          </div>
-          <div class="space-y-1">
-            <label class="text-sm font-semibold text-gray-700">Turma</label>
-            <select id="turma" required class="w-full rounded-xl border-gray-200 bg-gray-50/50 p-4 focus:bg-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none border transition-all text-sm">
-              <option value="">Selecione...</option>
-            </select>
-          </div>
+      <div class="flex flex-col gap-3">
+        <h3 class="text-lg font-semibold text-gray-700">Solicitações de Acesso Pendentes</h3>
+        <div class="bg-gray-50 border border-gray-200 rounded-lg p-4 min-h-[100px] max-h-[250px] overflow-y-auto shadow-inner">
+          <ul id="listaSolicitacoes" class="space-y-3">
+            <li class="text-sm text-gray-500 italic text-center py-4">A procurar solicitações...</li>
+          </ul>
         </div>
+      </div>
 
-        <!-- Matrícula -->
-        <div class="space-y-1">
-          <label class="text-sm font-semibold text-gray-700">Matrícula de Identificação</label>
-          <div class="flex gap-2">
-            <input id="matricula" type="text" readonly class="flex-1 rounded-xl border-gray-200 bg-gray-100 p-4 font-mono font-bold text-gray-600 border text-sm" placeholder="0000000">
-            <button id="refreshIdBtn" type="button" title="Gerar outro ID" class="p-4 bg-gray-100 text-gray-500 hover:bg-gray-200 rounded-xl transition-all">
-              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+      <hr class="border-gray-200">
+
+      <div class="flex flex-col gap-4">
+        <h3 class="text-lg font-semibold text-gray-700">Gestão de Cursos e Turmas</h3>
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div class="bg-indigo-50 p-5 rounded-xl border border-indigo-100 flex flex-col gap-3 shadow-sm">
+            <label class="text-sm font-semibold text-indigo-800">1. Adicionar Novo Curso</label>
+            <input type="text" id="novoCursoNome" placeholder="Ex: ENFERMAGEM" class="w-full px-4 py-2 rounded-lg border border-indigo-200 focus:ring-2 focus:ring-indigo-500 uppercase outline-none" oninput="this.value = this.value.toUpperCase()">
+            <button id="btnSalvarCurso" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 rounded-lg transition-colors text-sm shadow">
+              + Adicionar Curso
+            </button>
+          </div>
+
+          <div class="bg-emerald-50 p-5 rounded-xl border border-emerald-100 flex flex-col gap-3 shadow-sm">
+            <label class="text-sm font-semibold text-emerald-800">2. Adicionar Turma</label>
+            <select id="cursoParaTurma" class="w-full px-4 py-2 rounded-lg border border-emerald-200 focus:ring-2 focus:ring-emerald-500 outline-none bg-white">
+              <option value="">Selecione o Curso...</option>
+            </select>
+            <input type="text" id="novaTurmaNome" placeholder="Ex: 1ª SÉRIE A" class="w-full px-4 py-2 rounded-lg border border-emerald-200 focus:ring-2 focus:ring-emerald-500 uppercase outline-none disabled:opacity-50 disabled:bg-gray-100" disabled oninput="this.value = this.value.toUpperCase()">
+            <button id="btnSalvarTurma" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2 rounded-lg transition-colors text-sm shadow disabled:opacity-50" disabled>
+              + Adicionar Turma
             </button>
           </div>
         </div>
-
-        <!-- Ações do Formulário -->
-        <div class="flex flex-col-reverse sm:flex-row items-center justify-between pt-6 border-t border-gray-100 gap-4">
-          <button id="limparBtn" type="button" class="text-gray-400 font-bold hover:text-gray-600 transition-colors uppercase text-xs tracking-widest">Limpar</button>
-          <button id="gerarBtn" class="w-full sm:w-auto bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-4 px-8 rounded-xl shadow-lg shadow-indigo-100 transition-all flex items-center justify-center gap-2">
-            <span>Cadastrar e Gerar QR Code</span>
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
-          </button>
-        </div>
-      </form>
-    </section>
-
-    <!-- Preview da Carteirinha (Aparece após gerar) -->
-    <section id="previewSection" class="mt-12 flex flex-col items-center hidden">
-      <p class="text-xs font-bold text-gray-400 uppercase tracking-[0.2em] mb-4">Resultado da Geração</p>
-      <div id="cardWrapper" class="cracha-cr80 shadow-2xl relative">
-          <div class="w-[50mm] h-full flex flex-col justify-between overflow-hidden">
-            <img src="logo.jpeg" class="h-[24mm] w-auto object-contain object-left mb-1">
-            <div class="flex flex-col justify-end gap-[2px]">
-              <span id="cardNome" class="font-bold text-[10px] leading-tight uppercase text-black break-words whitespace-normal line-clamp-2"></span>
-              <span id="cardCurso" class="text-[8px] font-bold leading-tight uppercase text-indigo-700 break-words whitespace-normal line-clamp-2"></span>
-              <span id="cardTurma" class="text-[8px] leading-tight uppercase text-gray-800"></span>
-              <span id="cardMat" class="text-[8px] leading-tight uppercase text-gray-500 mt-1">ID: <span id="cardMatVal"></span></span>
-            </div>
-          </div>
-          <div class="w-[26mm] h-[26mm] flex-shrink-0 flex items-start justify-center">
-            <div id="qrcodeContainer" class="w-[26mm] h-[26mm]"></div>
-          </div>
-          <div class="absolute bottom-1 right-1 flex gap-1 no-print">
-            <button id="imprimirBtn" class="bg-green-600 text-white rounded px-2 py-1 text-[10px] hover:bg-green-700">Imprimir</button>
-            <button id="downloadBtn" class="bg-blue-600 text-white rounded px-2 py-1 text-[10px] hover:bg-blue-700">Baixar</button>
-          </div>
       </div>
-    </section>
-  </main>
 
-  <!-- Modal de Configurações Base -->
-  <div id="configModal" class="fixed inset-0 z-[100] hidden items-center justify-center p-4">
-    <div class="absolute inset-0 bg-gray-900/60 backdrop-blur-sm" id="closeConfigOverlay"></div>
-    <div class="bg-white w-full max-w-lg rounded-3xl shadow-2xl relative z-10 overflow-hidden flex flex-col max-h-[90vh]">
-      <div class="p-6 border-b flex justify-between items-center bg-gray-50/50">
-        <h2 class="text-lg font-bold text-gray-800">Configurações de Cursos e Turmas</h2>
-        <button id="closeConfigBtn" class="text-gray-400 hover:text-gray-600 p-2">
-          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
-        </button>
-      </div>
-      <div class="p-6 space-y-8 overflow-y-auto">
-          <!-- Gerenciar Cursos -->
-          <div class="space-y-4">
-            <p class="text-xs font-bold text-indigo-600 uppercase tracking-wider">Cursos</p>
-            <div class="flex gap-2">
-              <input id="newCurso" type="text" oninput="this.value = this.value.toUpperCase()" class="flex-1 rounded-xl border-gray-200 bg-gray-50 p-3 text-sm border outline-none focus:ring-2 focus:ring-indigo-500 uppercase" placeholder="NOME DO CURSO">
-              <button id="addCursoBtn" class="bg-indigo-600 text-white px-4 rounded-xl font-bold">+</button>
-            </div>
-          </div>
-          <!-- Gerenciar Turmas -->
-          <div class="space-y-4">
-            <p class="text-xs font-bold text-indigo-600 uppercase tracking-wider">Turmas por Curso</p>
-            <select id="configCursoSelect" class="w-full rounded-xl border-gray-200 bg-gray-50 p-3 text-sm border outline-none focus:ring-2 focus:ring-indigo-500"></select>
-            <div class="flex gap-2">
-              <input id="newTurma" type="text" oninput="this.value = this.value.toUpperCase()" class="flex-1 rounded-xl border-gray-200 bg-gray-50 p-3 text-sm border outline-none focus:ring-2 focus:ring-indigo-500 uppercase" placeholder="NOME DA TURMA">
-              <button id="addTurmaBtn" class="bg-indigo-600 text-white px-4 rounded-xl font-bold">+</button>
-            </div>
-          </div>
-          <ul id="listCursosComTurmas" class="space-y-3 pt-4 border-t"></ul>
-      </div>
     </div>
   </div>
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
-    import { getFirestore, collection, doc, setDoc, getDoc, getDocs, query, where, limit, updateDoc, arrayUnion, arrayRemove, deleteField, onSnapshot } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
+    import { getFirestore, collection, doc, setDoc, getDoc, getDocs, query, where, limit, updateDoc, onSnapshot, deleteDoc, deleteField, arrayRemove, arrayUnion, serverTimestamp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
+    import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
 
     // Configuração do Firebase (Preencha com suas chaves)
     const firebaseConfig = {
@@ -248,6 +332,7 @@
 
     // Inicializar Firebase
     const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
     const db = getFirestore(app);
 
     const form = document.getElementById('formAluno');
@@ -260,18 +345,73 @@
     const limparBtn = document.getElementById('limparBtn');
     const searchBtn = document.getElementById('searchBtn');
     const searchQuery = document.getElementById('searchQuery');
-    const configCursoSelect = document.getElementById('configCursoSelect');
-    const newCursoInput = document.getElementById('newCurso');
-    const newTurmaInput = document.getElementById('newTurma');
-    const listCursosComTurmas = document.getElementById('listCursosComTurmas');
+    const cursoParaTurma = document.getElementById('cursoParaTurma');
+    const novoCursoNome = document.getElementById('novoCursoNome');
+    const novaTurmaNome = document.getElementById('novaTurmaNome');
 
     // Lógica do Modal
     const configModal = document.getElementById('configModal');
     const openConfigBtn = document.getElementById('openConfigBtn');
     const closeConfigBtn = document.getElementById('closeConfigBtn');
-    const closeConfigOverlay = document.getElementById('closeConfigOverlay');
-    const refreshIdBtn = document.getElementById('refreshIdBtn');
-    const previewSection = document.getElementById('previewSection');
+    const logoutBtn = document.getElementById('logoutBtn');
+    const themeToggle = document.getElementById('themeToggle');
+
+    // Função para exibir toasts de notificação
+    function showToast(message, type = 'info', duration = 3000) {
+      const toastContainer = document.getElementById('toast-container');
+      if (!toastContainer) {
+        console.error('Toast container not found!');
+        return;
+      }
+
+      const toast = document.createElement('div');
+      toast.className = 'relative flex items-center justify-between w-full max-w-xs p-4 text-gray-900 bg-white rounded-lg shadow dark:text-gray-400 dark:bg-gray-800';
+
+      let icon = '';
+      let bgColor = '';
+      let textColor = '';
+
+      switch (type) {
+        case 'success':
+          icon = `<svg class="w-5 h-5 text-green-500 dark:text-green-400" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20"><path d="M10 .5a9.5 9.5 0 1 0 9.5 9.5A9.51 9.51 0 0 0 10 .5Zm3.707 8.207-4 4a1 1 0 0 1-1.414 0l-2-2a1 1 0 0 1 1.414-1.414L9 10.586l3.293-3.293a1 1 0 0 1 1.414 1.414Z"/></svg>`;
+          bgColor = 'bg-green-100 dark:bg-green-900';
+          textColor = 'text-green-800 dark:text-green-300';
+          break;
+        case 'error':
+          icon = `<svg class="w-5 h-5 text-red-500 dark:text-red-400" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20"><path d="M10 .5a9.5 9.5 0 1 0 9.5 9.5A9.51 9.51 0 0 0 10 .5Zm3.707 11.793a1 1 0 1 1-1.414 1.414L10 11.414l-2.293 2.293a1 1 0 0 1-1.414-1.414L8.586 10 6.293 7.707a1 1 0 0 1 1.414-1.414L10 8.586l2.293-2.293a1 1 0 0 1 1.414 1.414L11.414 10l2.293 2.293Z"/></svg>`;
+          bgColor = 'bg-red-100 dark:bg-red-900';
+          textColor = 'text-red-800 dark:text-red-300';
+          break;
+        case 'info':
+        default:
+          icon = `<svg class="w-5 h-5 text-blue-500 dark:text-blue-400" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20"><path d="M10 .5a9.5 9.5 0 1 0 9.5 9.5A9.51 9.51 0 0 0 10 .5ZM10 15a1 1 0 1 1 0-2 1 1 0 0 1 0 2Zm1-4a1 1 0 0 1-2 0V6a1 1 0 0 1 2 0v5Z"/></svg>`;
+          bgColor = 'bg-blue-100 dark:bg-blue-900';
+          textColor = 'text-blue-800 dark:text-blue-300';
+          break;
+      }
+
+      toast.innerHTML = `
+        <div class="inline-flex items-center justify-center flex-shrink-0 w-8 h-8 ${bgColor} rounded-lg">
+          ${icon}
+          <span class="sr-only">${type} icon</span>
+        </div>
+        <div class="ms-3 text-sm font-normal ${textColor}">${message}</div>
+        <button type="button" class="ms-auto -mx-1.5 -my-1.5 bg-white text-gray-400 hover:text-gray-900 rounded-lg focus:ring-2 focus:ring-gray-300 p-1.5 hover:bg-gray-100 inline-flex items-center justify-center h-8 w-8 dark:text-gray-500 dark:hover:text-white dark:bg-gray-800 dark:hover:bg-gray-700" data-dismiss-target="#toast-success" aria-label="Close">
+            <span class="sr-only">Close</span>
+            <svg class="w-3 h-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 14 14"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 6 6m0 0 6 6M7 7l6-6M7 7l-6 6"/></svg>
+        </button>
+      `;
+
+      toastContainer.appendChild(toast);
+
+      setTimeout(() => {
+        toast.remove();
+      }, duration);
+
+      toast.querySelector('button').addEventListener('click', () => {
+        toast.remove();
+      });
+    }
 
     const toggleModal = (show) => {
       if(show) {
@@ -287,10 +427,99 @@
 
     openConfigBtn.onclick = () => toggleModal(true);
     closeConfigBtn.onclick = () => toggleModal(false);
-    closeConfigOverlay.onclick = () => toggleModal(false);
-    refreshIdBtn.onclick = () => {
-      matriculaInput.value = generateMatricula();
+
+    // Lógica de Alternar Tema
+    themeToggle.addEventListener('click', () => {
+      if (document.documentElement.classList.contains('dark')) {
+        document.documentElement.classList.remove('dark');
+        localStorage.setItem('theme', 'light');
+      } else {
+        document.documentElement.classList.add('dark');
+        localStorage.setItem('theme', 'dark');
+      }
+    });
+
+    // Proteção de rota e Logout
+    onAuthStateChanged(auth, async (user) => {
+      if (!user) { window.location.href = 'login.html'; return; }
+      
+      const userDoc = await getDoc(doc(db, "usuarios", user.uid));
+      if (!userDoc.exists() || userDoc.data().status !== 'aprovado') { 
+        window.location.href = 'login.html'; 
+        return;
+      }
+      
+      // Exibir nome do usuário
+      document.getElementById('userNameDisplay').textContent = userDoc.data().nome || user.email;
+      
+      // Iniciar contador de solicitações pendentes
+      const qPendentes = query(collection(db, "usuarios"), where("status", "==", "pendente"));
+      onSnapshot(qPendentes, (snap) => {
+        const badge = document.getElementById('badgeSolicitacoes');
+        badge.textContent = snap.size;
+        badge.classList.toggle('hidden', snap.size === 0);
+      });
+    });
+    window.toggleAccessView = () => {
+      const accessSection = document.getElementById('accessManagementSection');
+      const formSection = document.querySelector('form#formAluno').closest('section');
+      const navCadastrar = document.getElementById('navCadastrar');
+      const navSolicitacoes = document.getElementById('navSolicitacoes');
+
+      const activeClasses = ['bg-indigo-600', 'text-white', 'shadow-lg', 'shadow-indigo-100'];
+      const inactiveClasses = ['text-gray-600', 'dark:text-slate-400', 'hover:bg-indigo-50', 'dark:hover:bg-slate-800'];
+
+      const isOpeningAccess = accessSection.classList.contains('hidden');
+
+      accessSection.classList.toggle('hidden');
+      formSection.classList.toggle('hidden');
+
+      if (isOpeningAccess) {
+        navSolicitacoes.classList.add(...activeClasses);
+        navSolicitacoes.classList.remove(...inactiveClasses);
+        navCadastrar.classList.remove(...activeClasses);
+        navCadastrar.classList.add(...inactiveClasses);
+        carregarPendentes();
+      } else {
+        navSolicitacoes.classList.remove(...activeClasses);
+        navSolicitacoes.classList.add(...inactiveClasses);
+        navCadastrar.classList.add(...activeClasses);
+        navCadastrar.classList.remove(...inactiveClasses);
+      }
     };
+
+    function carregarPendentes() {
+      const q = query(collection(db, "usuarios"), where("status", "==", "pendente"));
+      onSnapshot(q, (snapshot) => {
+        const tbody = document.getElementById('listaPendentes');
+        tbody.innerHTML = '';
+        snapshot.forEach(userDoc => {
+          const u = userDoc.data();
+          const tr = document.createElement('tr');
+          tr.innerHTML = `
+            <td class="px-6 py-4 font-medium">${u.nome}</td>
+            <td class="px-6 py-4 text-sm">${u.email}</td>
+            <td class="px-6 py-4 text-right flex justify-end gap-2">
+              <button onclick="decidirAcesso('${userDoc.id}', 'aprovado')" class="bg-emerald-500 text-white px-3 py-1 rounded-lg text-xs font-bold">Aprovar</button>
+              <button onclick="decidirAcesso('${userDoc.id}', 'rejeitado')" class="bg-red-500 text-white px-3 py-1 rounded-lg text-xs font-bold">Rejeitar</button>
+            </td>
+          `;
+          tbody.appendChild(tr);
+        });
+      });
+    }
+
+    window.decidirAcesso = async (uid, status) => {
+      try {
+        await updateDoc(doc(db, "usuarios", uid), { status });
+        showToast(`Usuário ${status}!`, 'success');
+      } catch (err) {
+        showToast("Erro na ação.", 'error');
+      }
+    };
+    logoutBtn.addEventListener('click', async () => {
+      await signOut(auth);
+    });
 
     let cursosComTurmas = {};
 
@@ -322,6 +551,7 @@
           const snap = await getDocs(q);
           if (!snap.empty) {
             nomeWarning.classList.remove('hidden');
+ showToast('Nome já consta na base de dados.', 'info', 5000);
           }
         } catch (e) {
           console.error("Erro ao verificar nome:", e);
@@ -351,8 +581,7 @@
 
           const cursos = Object.keys(cursosComTurmas).sort((a, b) => a.localeCompare(b, 'pt-BR'));
           populateCourseSelect(cursoSelect, cursos, "Selecione um curso");
-          populateCourseSelect(configCursoSelect, cursos, "Selecione um curso");
-          renderConfigList(cursosComTurmas);
+          populateCourseSelect(cursoParaTurma, cursos, "Selecione o Curso...");
           handleCursoSelectChange();
         } else {
           await setDoc(configDocRef, { cursosComTurmas: {} });
@@ -381,71 +610,7 @@
       selectEl.disabled = disabled;
     }
 
-    function renderConfigList(cursosComTurmasData) {
-      listCursosComTurmas.innerHTML = '';
-      const cursos = Object.keys(cursosComTurmasData).sort((a, b) => a.localeCompare(b, 'pt-BR'));
 
-      if (!cursos.length) {
-        const emptyItem = document.createElement('li');
-        emptyItem.className = 'text-sm text-gray-500';
-        emptyItem.textContent = 'Nenhum curso cadastrado.';
-        listCursosComTurmas.appendChild(emptyItem);
-        return;
-      }
-
-      cursos.forEach(curso => {
-        const turmas = Array.isArray(cursosComTurmasData[curso]) ? cursosComTurmasData[curso].sort((a, b) => a.localeCompare(b, 'pt-BR')) : [];
-        const cursoItem = document.createElement('li');
-        cursoItem.className = 'space-y-2 border border-gray-100 rounded-lg p-3';
-
-        const header = document.createElement('div');
-        header.className = 'flex items-center justify-between gap-2';
-
-        const title = document.createElement('span');
-        title.className = 'font-semibold text-gray-800';
-        title.textContent = curso;
-
-        const deleteCursoBtn = document.createElement('button');
-        deleteCursoBtn.className = 'text-red-500 hover:text-red-700 text-xs font-medium';
-        deleteCursoBtn.textContent = 'Excluir curso';
-        deleteCursoBtn.onclick = () => window.removeConfig('curso', curso);
-
-        header.appendChild(title);
-        header.appendChild(deleteCursoBtn);
-        cursoItem.appendChild(header);
-
-        if (turmas.length) {
-          const turmaList = document.createElement('ul');
-          turmaList.className = 'space-y-2 mt-3';
-
-          turmas.forEach(turma => {
-            const turmaItem = document.createElement('li');
-            turmaItem.className = 'flex items-center justify-between gap-2 bg-gray-50 rounded p-2';
-
-            const turmaLabel = document.createElement('span');
-            turmaLabel.textContent = turma;
-
-            const deleteTurmaBtn = document.createElement('button');
-            deleteTurmaBtn.className = 'text-red-500 hover:text-red-700 text-xs';
-            deleteTurmaBtn.textContent = 'Excluir turma';
-            deleteTurmaBtn.onclick = () => window.removeConfig('turma', curso, turma);
-
-            turmaItem.appendChild(turmaLabel);
-            turmaItem.appendChild(deleteTurmaBtn);
-            turmaList.appendChild(turmaItem);
-          });
-
-          cursoItem.appendChild(turmaList);
-        } else {
-          const emptyState = document.createElement('p');
-          emptyState.className = 'text-xs text-gray-500 mt-2';
-          emptyState.textContent = 'Nenhuma turma cadastrada para este curso.';
-          cursoItem.appendChild(emptyState);
-        }
-
-        listCursosComTurmas.appendChild(cursoItem);
-      });
-    }
 
     window.removeConfig = async (type, curso, turma) => {
       if (type === 'curso') {
@@ -457,24 +622,29 @@
       }
     };
 
-    document.getElementById('addCursoBtn').onclick = async () => {
-      const val = newCursoInput.value.trim().toUpperCase();
+    document.getElementById('btnSalvarCurso').onclick = async () => {
+      const val = novoCursoNome.value.trim().toUpperCase();
       if (!val) return;
       await updateDoc(configDocRef, { [`cursosComTurmas.${val}`]: [] });
-      newCursoInput.value = '';
-      configCursoSelect.value = val;
+      novoCursoNome.value = '';
+      cursoParaTurma.value = val;
+      showToast('Curso adicionado com sucesso!', 'success');
     };
 
-    document.getElementById('addTurmaBtn').onclick = async () => {
-      const cursoSelecionado = configCursoSelect.value;
-      const val = newTurmaInput.value.trim().toUpperCase();
+    document.getElementById('btnSalvarTurma').onclick = async () => {
+      const cursoSelecionado = cursoParaTurma.value;
+      const val = novaTurmaNome.value.trim().toUpperCase();
       if (!cursoSelecionado) {
-        alert('Selecione um curso antes de adicionar a turma.');
+        showToast('Selecione um curso antes de adicionar a turma.', 'error');
         return;
       }
-      if (!val) return;
+      if (!val) {
+        showToast('Digite o nome da turma.', 'error');
+        return;
+      }
       await updateDoc(configDocRef, { [`cursosComTurmas.${cursoSelecionado}`]: arrayUnion(val) });
-      newTurmaInput.value = '';
+      novaTurmaNome.value = '';
+      showToast('Turma adicionada com sucesso!', 'success');
     };
 
     function handleCursoSelectChange() {
@@ -488,8 +658,10 @@
     }
 
     cursoSelect.addEventListener('change', handleCursoSelectChange);
-    configCursoSelect.addEventListener('change', () => {
-      newTurmaInput.focus();
+    cursoParaTurma.addEventListener('change', () => {
+      novaTurmaNome.disabled = !cursoParaTurma.value;
+      document.getElementById('btnSalvarTurma').disabled = !cursoParaTurma.value;
+      if (cursoParaTurma.value) novaTurmaNome.focus();
     });
 
     // Gera matrícula aleatória de 7 dígitos
@@ -512,35 +684,17 @@
           matricula: matricula,
           curso: curso.toUpperCase(),
           turma: turma.toUpperCase(),
-          status: 'ativo'
+          status: 'ativo',
+          dataCadastro: serverTimestamp()
         });
+        showToast('Aluno cadastrado com sucesso!', 'success');
         console.log("Aluno cadastrado no Firestore com sucesso!");
         return true;
       } catch (error) {
         console.error("Erro ao salvar no Firestore:", error);
-        alert("Erro ao salvar no banco de dados. Verifique o console.");
+        showToast('Erro ao salvar no banco de dados.', 'error');
         return false;
       }
-    }
-
-    function gerarCarteirinha(nome, matricula, curso, turma) {
-      // Renderizar QR Code usando a biblioteca qrcode.js
-      qrcodeContainer.innerHTML = ""; // Limpa anterior
-      new QRCode(qrcodeContainer, {
-        text: matricula,
-        width: 85,
-        height: 85,
-        colorDark : "#000000",
-        colorLight : "#ffffff",
-        correctLevel : QRCode.CorrectLevel.H
-      });
-
-      cardNome.textContent = nome;
-      cardCurso.textContent = curso;
-      cardTurma.textContent = turma;
-      cardMatVal.textContent = matricula;
-
-      previewSection.classList.remove('hidden');
     }
 
     gerarBtn.addEventListener('click', async (e) => {
@@ -551,7 +705,7 @@
       const matricula = matriculaInput.value;
       
       if (!nome || !curso || !turma) {
-        alert('Preencha todos os campos.');
+        showToast('Preencha todos os campos.', 'info');
         return;
       }
 
@@ -562,8 +716,7 @@
       const salvo = await salvarNoFirestore(nome, matricula, curso, turma);
       
       if (salvo) {
-        gerarCarteirinha(nome, matricula, curso, turma);
-        // Prepara para um novo cadastro se necessário
+        // Prepara para um novo cadastro
         nomeInput.value = '';
         cursoSelect.value = '';
         turmaSelect.value = '';
@@ -601,7 +754,7 @@
         if (aluno) {
           gerarCarteirinha(aluno.nome, aluno.matricula, aluno.curso, aluno.turma);
         } else {
-          alert("Aluno não encontrado.");
+ showToast("Aluno não encontrado.", 'info');
         }
       } catch (e) {
         console.error("Erro na busca:", e);
@@ -618,6 +771,7 @@
     });
 
     imprimirBtn.addEventListener('click', () => window.print());
+ showToast('Carteirinha PDF gerada e baixada!', 'success');
 
     downloadBtn.addEventListener('click', async () => {
       const canvas = qrcodeContainer.querySelector('canvas');
@@ -638,7 +792,7 @@
       pdf.roundedRect(0, 0, 86, 54, 2, 2);
 
       // Logo (Margem 4mm)
-      pdf.addImage('logo.jpeg', 'JPEG', 4, 4, 24, 24);
+      pdf.addImage('logo.png', 'PNG', 4, 4, 24, 24);
       
       // QR Code (Posicionado à direita: 86 - 4 (margem) - 26 (largura) = 56mm)
       pdf.addImage(qrDataUrl, 'PNG', 56, 4, 26, 26);
@@ -670,5 +824,6 @@
       pdf.save(fileName);
     });
   </script>
+  <div id="toast-container" class="fixed top-4 right-4 z-[9999] space-y-2"></div>
 </body>
 </html>

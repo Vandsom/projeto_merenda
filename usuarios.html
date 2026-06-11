@@ -1,0 +1,153 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>CETIPass — Gestão de Usuários</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = { darkMode: 'class' }
+    if (localStorage.getItem('theme') === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+  </script>
+  <style>
+    body { -webkit-font-smoothing: antialiased; }
+  </style>
+</head>
+<body class="bg-gray-50 dark:bg-slate-950 min-h-screen text-gray-800 dark:text-gray-200 flex flex-col md:flex-row transition-colors duration-300">
+
+  <aside class="w-full md:w-64 bg-white dark:bg-slate-900 border-r border-gray-200 dark:border-slate-800 flex-shrink-0 flex flex-col h-auto md:h-screen sticky top-0">
+    <div class="p-6 border-b border-gray-100 flex items-center gap-3">
+      <img src="logo.png" alt="Logo" class="h-10 w-auto">
+      <div>
+        <h2 class="font-bold text-gray-900 dark:text-white leading-tight">CETIPass</h2>
+        <p class="text-[10px] text-gray-400 uppercase tracking-widest font-bold">Gestão de Acesso</p>
+      </div>
+    </div>
+    <nav class="flex-1 p-4 space-y-1">
+      <a href="dashboard.html" class="flex items-center gap-3 p-3 rounded-xl text-gray-600 dark:text-slate-400 hover:bg-indigo-50 dark:hover:bg-slate-800 transition-all font-medium">Dashboard</a>
+      <a href="leitor.html" class="flex items-center gap-3 p-3 rounded-xl text-gray-600 dark:text-slate-400 hover:bg-indigo-50 dark:hover:bg-slate-800 transition-all font-medium">Leitor QR</a>
+      <a href="listagem.html" class="flex items-center gap-3 p-3 rounded-xl text-gray-600 dark:text-slate-400 hover:bg-indigo-50 dark:hover:bg-slate-800 transition-all font-medium">Listagem</a>
+      <a href="admin.html" class="flex items-center gap-3 p-3 rounded-xl text-gray-600 dark:text-slate-400 hover:bg-indigo-50 dark:hover:bg-slate-800 transition-all font-medium">Cadastrar Aluno</a>
+      <a href="usuarios.html" class="flex items-center gap-3 p-3 rounded-xl bg-indigo-600 text-white font-medium">Gestão de Usuários</a>
+      <button id="themeToggle" class="w-full flex items-center gap-3 p-3 rounded-xl text-gray-600 dark:text-slate-400 hover:bg-indigo-50 dark:hover:bg-slate-800 transition-all font-medium">
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="dark:hidden"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="hidden dark:block"><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="M4.93 4.93l1.41 1.41"/><path d="M17.66 17.66l1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="M6.34 17.66l-1.41 1.41"/><path d="M19.07 4.93l-1.41 1.41"/></svg>
+        Alternar Tema
+      </button>
+      <button id="logoutBtn" class="w-full flex items-center gap-3 p-3 rounded-xl text-red-500 hover:bg-red-50 transition-all font-medium">
+        Sair
+      </button>
+    </nav>
+  </aside>
+
+  <main class="flex-1 p-4 md:p-12 overflow-y-auto h-screen">
+    <div class="max-w-5xl mx-auto">
+      <header class="mb-10">
+        <h1 class="text-3xl font-bold text-gray-900 dark:text-white">Gestão de Usuários</h1>
+        <p class="text-gray-500">Aprove novos administradores e gerencie papéis.</p>
+      </header>
+
+      <div class="bg-white dark:bg-slate-900 rounded-3xl shadow-sm border border-gray-100 dark:border-slate-800 overflow-hidden">
+        <table class="w-full text-left">
+          <thead class="bg-gray-50 dark:bg-slate-800 text-xs font-bold text-gray-500 uppercase">
+            <tr>
+              <th class="px-6 py-4">E-mail</th>
+              <th class="px-6 py-4">Papel</th>
+              <th class="px-6 py-4">Status</th>
+              <th class="px-6 py-4 text-right">Ações</th>
+            </tr>
+          </thead>
+          <tbody id="listaUsuarios" class="divide-y divide-gray-50 dark:divide-slate-800">
+            <tr><td colspan="4" class="px-6 py-8 text-center text-gray-400">Carregando usuários...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </main>
+
+  <script type="module">
+    import { auth, db } from "./firebase-config.js";
+    import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
+    import { collection, doc, getDoc, updateDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
+
+    const listaUsuariosEl = document.getElementById('listaUsuarios');
+    const themeToggle = document.getElementById('themeToggle');
+    const logoutBtn = document.getElementById('logoutBtn');
+
+    // Lógica de Alternar Tema
+    themeToggle.addEventListener('click', () => {
+      if (document.documentElement.classList.contains('dark')) {
+        document.documentElement.classList.remove('dark');
+        localStorage.setItem('theme', 'light');
+      } else {
+        document.documentElement.classList.add('dark');
+        localStorage.setItem('theme', 'dark');
+      }
+    });
+
+    logoutBtn.addEventListener('click', async () => { await signOut(auth); });
+
+    onAuthStateChanged(auth, async (user) => {
+      if (!user) { window.location.href = 'login.html'; return; }
+      
+      const userSnap = await getDoc(doc(db, "usuarios", user.uid));
+      if (!userSnap.exists() || userSnap.data().role !== 'admin') {
+        alert("Acesso negado. Esta área é restrita a administradores.");
+        window.location.href = 'dashboard.html';
+        return;
+      }
+      
+      onSnapshot(collection(db, "usuarios"), (snapshot) => {
+        listaUsuariosEl.innerHTML = '';
+        snapshot.forEach(docSnap => {
+          const usuario = docSnap.data();
+          const id = docSnap.id;
+          const isSelf = user.uid === id;
+          
+          const tr = document.createElement('tr');
+          tr.innerHTML = `
+            <td class="px-6 py-4 text-sm font-medium text-gray-700 dark:text-slate-300">${usuario.email}</td>
+            <td class="px-6 py-4">
+              <select onchange="window.updateUserRole('${id}', this.value)" ${isSelf ? 'disabled' : ''} class="text-sm border-gray-200 dark:border-slate-700 rounded-lg p-2 bg-white dark:bg-slate-800 focus:ring-2 focus:ring-indigo-500 outline-none">
+                <option value="viewer" ${usuario.role === 'viewer' ? 'selected' : ''}>Visualizador</option>
+                <option value="operator" ${usuario.role === 'operator' ? 'selected' : ''}>Operador</option>
+                <option value="admin" ${usuario.role === 'admin' ? 'selected' : ''}>Admin</option>
+              </select>
+            </td>
+            <td class="px-6 py-4">
+              <span class="px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest ${usuario.status === 'approved' ? 'bg-green-100 text-green-700' : 'bg-orange-100 text-orange-700'}">
+                ${usuario.status}
+              </span>
+            </td>
+            <td class="px-6 py-4 text-right">
+              ${!isSelf ? `
+                <button onclick="window.toggleStatus('${id}', '${usuario.status}')" class="px-4 py-2 rounded-lg text-xs font-bold transition-all ${usuario.status === 'pending' ? 'bg-indigo-600 text-white hover:bg-indigo-700' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}">
+                  ${usuario.status === 'pending' ? 'Aprovar' : 'Suspender'}
+                </button>
+              ` : '<span class="text-xs text-gray-400 italic">Você</span>'}
+            </td>
+          `;
+          listaUsuariosEl.appendChild(tr);
+        });
+      });
+    });
+
+    window.toggleStatus = async (id, currentStatus) => {
+      const next = currentStatus === 'pending' ? 'approved' : 'pending';
+      try {
+        await updateDoc(doc(db, "usuarios", id), { status: next });
+      } catch (e) { alert("Erro ao atualizar status."); }
+    };
+
+    window.updateUserRole = async (id, role) => {
+      try {
+        await updateDoc(doc(db, "usuarios", id), { role: role });
+      } catch (e) { alert("Erro ao atualizar papel."); }
+    };
+  </script>
+</body>
+</html>

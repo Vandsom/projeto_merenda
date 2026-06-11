@@ -3,10 +3,19 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Listagem de Alunos — Sistema de Merenda</title>
+  <title>CETIPass — Listagem de Alunos</title>
   <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = { darkMode: 'class' }
+    if (localStorage.getItem('theme') === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+  </script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
   <style>
     .modal { transition: opacity 0.25s ease; }
     body.modal-active { overflow: hidden; }
@@ -72,60 +81,91 @@
     }
   </style>
 </head>
-<body class="bg-gray-50 min-h-screen py-8">
-  <header class="no-print bg-gray-50 border-b border-gray-200 sticky top-0 z-50 py-4 mb-8">
-    <div class="max-w-5xl mx-auto px-4 flex justify-between items-center">
+<body class="bg-gray-50 dark:bg-slate-950 min-h-screen text-gray-800 dark:text-gray-200 flex flex-col md:flex-row transition-colors duration-300">
+
+  <!-- Menu Lateral -->
+  <aside class="no-print w-full md:w-64 bg-white dark:bg-slate-900 border-r border-gray-200 dark:border-slate-800 flex-shrink-0 flex flex-col h-auto md:h-screen sticky top-0">
+    <div class="p-6 border-b border-gray-100 flex items-center gap-3">
+      <img src="logo.png" alt="Logo" class="h-10 w-auto">
       <div>
-        <h1 class="text-2xl font-semibold text-gray-800">Alunos Cadastrados</h1>
-      </div>
-      <div class="flex gap-2">
-        <a href="index.html" class="nav-button">
-          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><rect width="5" height="5" x="3" y="3" rx="1"/><rect width="5" height="5" x="16" y="3" rx="1"/><rect width="5" height="5" x="3" y="16" rx="1"/><path d="M21 16h-3a2 2 0 0 0-2 2v3"/><path d="M21 21v.01"/><path d="M12 7v3"/><path d="M7 12h3"/><path d="M12 12h.01"/><path d="M16 12h.01"/><path d="M12 16v.01"/><path d="M16 16v.01"/><path d="M21 12v.01"/><path d="M12 21v.01"/></svg>
-          Leitor QR
-        </a>
-        <a href="dashboard.html" class="nav-button">
-          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><rect width="7" height="9" x="3" y="3" rx="1"/><rect width="7" height="5" x="14" y="3" rx="1"/><rect width="7" height="9" x="14" y="12" rx="1"/><rect width="7" height="5" x="3" y="16" rx="1"/></svg>
-          Dashboard
-        </a>
-        <button id="batchPrintBtn" class="hidden bg-gray-800 text-white px-4 py-2 rounded-lg hover:bg-black transition font-medium text-sm">
-          🖨️ Imprimir Turma Atual
-        </button>
-        <button id="exportarBtn" class="bg-emerald-600 text-white px-4 py-2 rounded-lg hover:bg-emerald-700 transition font-medium text-sm">
-          Exportar CSV
-        </button>
-        <a href="admin.html" class="nav-button">
-          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" x2="19" y1="8" y2="14"/><line x1="16" x2="22" y1="11" y2="11"/></svg>
-          + Novo Aluno
-        </a>
+        <h2 class="font-bold text-gray-900 dark:text-white leading-tight">CETIPass</h2>
+        <p class="text-[10px] text-gray-400 uppercase tracking-widest font-bold">Gestão de Acesso</p>
       </div>
     </div>
-  </header>
+    
+    <nav class="flex-1 p-4 space-y-1">
+      <a href="dashboard.html" class="flex items-center gap-3 p-3 rounded-xl text-gray-600 dark:text-slate-400 hover:bg-indigo-50 dark:hover:bg-slate-800 hover:text-indigo-600 dark:hover:text-indigo-400 hover:translate-x-1 hover:scale-[1.02] transition-all duration-300 ease-in-out font-medium">
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="7" height="9" x="3" y="3" rx="1"/><rect width="7" height="5" x="14" y="3" rx="1"/><rect width="7" height="9" x="14" y="12" rx="1"/><rect width="7" height="5" x="3" y="16" rx="1"/></svg>
+        Dashboard
+      </a>
+      <a href="leitor.html" class="flex items-center gap-3 p-3 rounded-xl text-gray-600 dark:text-slate-400 hover:bg-indigo-50 dark:hover:bg-slate-800 hover:text-indigo-600 dark:hover:text-indigo-400 hover:translate-x-1 hover:scale-[1.02] transition-all duration-300 ease-in-out font-medium">
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="5" height="5" x="3" y="3" rx="1"/><rect width="5" height="5" x="16" y="3" rx="1"/><rect width="5" height="5" x="3" y="16" rx="1"/><path d="M21 16h-3a2 2 0 0 0-2 2v3"/><path d="M21 21v.01"/><path d="M12 7v3"/><path d="M7 12h3"/><path d="M12 12h.01"/><path d="M16 12h.01"/><path d="M12 16v.01"/><path d="M16 16v.01"/><path d="M21 12v.01"/><path d="M12 21v.01"/></svg>
+        Leitor QR
+      </a>
+      <a href="listagem.html" class="flex items-center gap-3 p-3 rounded-xl bg-indigo-600 text-white shadow-lg shadow-indigo-100 hover:scale-[1.02] transition-all duration-300 ease-in-out font-medium">
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="8" x2="21" y1="6" y2="6"/><line x1="8" x2="21" y1="12" y2="12"/><line x1="8" x2="21" y1="18" y2="18"/><line x1="3" x2="3.01" y1="6" y2="6"/><line x1="3" x2="3.01" y1="12" y2="12"/><line x1="3" x2="3.01" y1="18" y2="18"/></svg>
+        Listagem
+      </a>
+      <a href="imprimir.html" class="flex items-center gap-3 p-3 rounded-xl text-gray-600 dark:text-slate-400 hover:bg-indigo-50 dark:hover:bg-slate-800 hover:text-indigo-600 dark:hover:text-indigo-400 hover:translate-x-1 hover:scale-[1.02] transition-all duration-300 ease-in-out font-medium">
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><path d="M6 9V4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v5"/><rect x="6" y="14" width="12" height="8" rx="2"/></svg>
+        Imprimir Carteiras
+      </a>
+      <a href="admin.html" class="flex items-center gap-3 p-3 rounded-xl text-gray-600 dark:text-slate-400 hover:bg-indigo-50 dark:hover:bg-slate-800 hover:text-indigo-600 dark:hover:text-indigo-400 hover:translate-x-1 hover:scale-[1.02] transition-all duration-300 ease-in-out font-medium">
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" x2="19" y1="8" y2="14"/><line x1="16" x2="22" y1="11" y2="11"/></svg>
+        Cadastrar Aluno
+      </a>
+      <button id="themeToggle" class="w-full flex items-center gap-3 p-3 rounded-xl text-gray-600 dark:text-slate-400 hover:bg-indigo-50 dark:hover:bg-slate-800 transition-all font-medium">
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="dark:hidden"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="hidden dark:block"><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="M4.93 4.93l1.41 1.41"/><path d="M17.66 17.66l1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="M6.34 17.66l-1.41 1.41"/><path d="M19.07 4.93l-1.41 1.41"/></svg>
+        Alternar Tema
+      </button>
+      <button id="logoutBtn" class="w-full flex items-center gap-3 p-3 rounded-xl text-red-500 hover:bg-red-50 transition-all font-medium">
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" x2="9" y1="12" y2="12"/></svg>
+        Sair
+      </button>
+    </nav>
+  </aside>
 
-  <div class="max-w-5xl mx-auto px-4">
+  <main class="flex-1 p-4 md:p-12 overflow-y-auto h-screen">
+    <div class="max-w-5xl mx-auto">
+      <header class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-10">
+        <h1 class="text-3xl font-bold text-gray-900 dark:text-white">Alunos Cadastrados</h1>
+        <div class="flex gap-3">
+          <button id="batchPrintBtn" class="hidden bg-gray-800 text-white px-5 py-3 rounded-xl hover:bg-black transition font-bold text-sm">
+            🖨️ Imprimir Turma
+          </button>
+          <button id="exportarPdfBtn" class="bg-indigo-600 text-white px-5 py-3 rounded-xl hover:bg-indigo-700 transition font-bold text-sm">
+            Exportar PDF
+          </button>
+          <button id="exportarBtn" class="bg-emerald-600 text-white px-5 py-3 rounded-xl hover:bg-emerald-700 transition font-bold text-sm">
+            Exportar CSV
+          </button>
+        </div>
+      </header>
 
     <!-- Filtros de Busca -->
     <section class="mb-6 grid grid-cols-1 md:grid-cols-2 gap-4 no-print">
       <div class="md:col-span-2">
-        <input id="filtroBusca" type="text" oninput="this.value = this.value.toUpperCase()" placeholder="PESQUISAR POR NOME OU MATRÍCULA..." class="w-full rounded-lg border-gray-300 shadow-sm p-3 text-sm focus:ring-2 focus:ring-indigo-200 border outline-none uppercase" />
+        <input id="filtroBusca" type="text" oninput="this.value = this.value.toUpperCase()" placeholder="PESQUISAR POR NOME OU MATRÍCULA..." class="w-full rounded-lg border-gray-300 dark:border-slate-700 dark:bg-slate-900 dark:text-white shadow-sm p-3 text-sm focus:ring-2 focus:ring-indigo-200 border outline-none uppercase" />
       </div>
       <div>
-        <select id="filtroCurso" class="w-full rounded-lg border-gray-300 shadow-sm p-3 text-sm focus:ring-2 focus:ring-indigo-200 bg-white border outline-none">
+        <select id="filtroCurso" class="w-full rounded-lg border-gray-300 dark:border-slate-700 shadow-sm p-3 text-sm focus:ring-2 focus:ring-indigo-200 bg-white dark:bg-slate-900 dark:text-white border outline-none">
           <option value="">Todos os Cursos</option>
         </select>
       </div>
       <div>
-        <select id="filtroTurma" disabled class="w-full rounded-lg border-gray-300 shadow-sm p-3 text-sm focus:ring-2 focus:ring-indigo-200 bg-white border outline-none">
+        <select id="filtroTurma" disabled class="w-full rounded-lg border-gray-300 dark:border-slate-700 shadow-sm p-3 text-sm focus:ring-2 focus:ring-indigo-200 bg-white dark:bg-slate-900 dark:text-white border outline-none">
           <option value="">Todas as Turmas</option>
         </select>
       </div>
     </section>
 
     <!-- Tabela de Alunos -->
-    <main class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden no-print">
+    <main class="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-gray-100 dark:border-slate-800 overflow-hidden no-print">
       <div class="overflow-x-auto">
         <table class="w-full text-left border-collapse">
           <thead>
-            <tr class="bg-gray-50 border-b border-gray-100">
+            <tr class="bg-gray-50 dark:bg-slate-800 border-b border-gray-100 dark:border-slate-800">
               <th class="px-6 py-4 text-xs font-semibold text-gray-500 uppercase">Nome</th>
               <th class="px-6 py-4 text-xs font-semibold text-gray-500 uppercase">Matrícula</th>
               <th class="px-6 py-4 text-xs font-semibold text-gray-500 uppercase">Curso</th>
@@ -134,7 +174,7 @@
               <th class="px-6 py-4 text-xs font-semibold text-gray-500 uppercase text-right">Ações</th>
             </tr>
           </thead>
-          <tbody id="listaAlunos" class="divide-y divide-gray-50">
+          <tbody id="listaAlunos" class="divide-y divide-gray-50 dark:divide-slate-800">
             <!-- Linhas inseridas via JS -->
             <tr>
               <td colspan="4" class="px-6 py-8 text-center text-gray-400">Carregando alunos...</td>
@@ -152,17 +192,17 @@
   <div id="qrModal" class="modal opacity-0 pointer-events-none fixed w-full h-full top-0 left-0 flex items-center justify-center z-50">
     <div class="modal-overlay absolute w-full h-full bg-gray-900 opacity-50"></div>
     
-    <div class="modal-container bg-white cracha-cr80 mx-auto rounded-xl shadow-2xl z-50 overflow-hidden relative" id="modalCard">
+    <div class="modal-container bg-white dark:bg-slate-900 cracha-cr80 mx-auto rounded-xl shadow-2xl z-50 overflow-hidden relative border dark:border-slate-800" id="modalCard">
       <div class="w-[50mm] h-full flex flex-col justify-between overflow-hidden text-left">
-        <img src="logo.jpeg" class="h-[24mm] w-auto object-contain object-left mb-1">
+        <img src="logo.png" class="h-[24mm] w-auto object-contain object-left mb-1">
         <div class="flex flex-col justify-end gap-[2px]">
-          <span id="modalNome" class="font-bold text-[10px] leading-tight uppercase text-black break-words whitespace-normal line-clamp-2"></span>
-          <span id="modalCurso" class="text-[8px] font-bold leading-tight uppercase text-indigo-700 break-words whitespace-normal line-clamp-2"></span>
-          <span id="modalTurma" class="text-[8px] leading-tight uppercase text-gray-800"></span>
-          <span id="modalMat" class="text-[8px] leading-tight uppercase text-gray-500 mt-1">ID: <span></span></span>
+          <span id="modalNome" class="font-bold text-[10px] leading-tight uppercase text-black dark:text-white break-words whitespace-normal line-clamp-2"></span>
+          <span id="modalCurso" class="text-[8px] font-bold leading-tight uppercase text-indigo-700 dark:text-indigo-400 break-words whitespace-normal line-clamp-2"></span>
+          <span id="modalTurma" class="text-[8px] leading-tight uppercase text-gray-800 dark:text-slate-300"></span>
+          <span id="modalMat" class="text-[8px] leading-tight uppercase text-gray-500 dark:text-slate-400 mt-1">ID: <span></span></span>
         </div>
       </div>
-      <div class="w-[26mm] h-[26mm] flex-shrink-0 flex items-start justify-center">
+      <div class="w-[26mm] h-[26mm] flex-shrink-0 flex items-start justify-center bg-white p-1 rounded">
         <div id="modalQRContainer" class="w-[26mm] h-[26mm]"></div>
       </div>
       <div class="absolute bottom-1 right-1 flex gap-1 no-print">
@@ -177,32 +217,32 @@
   <div id="editModal" class="modal opacity-0 pointer-events-none fixed w-full h-full top-0 left-0 flex items-center justify-center z-50">
     <div class="modal-overlay absolute w-full h-full bg-gray-900 opacity-50"></div>
     
-    <div class="modal-container bg-white w-full max-w-md mx-auto rounded-2xl shadow-2xl z-50 overflow-y-auto border border-gray-100">
+    <div class="modal-container bg-white dark:bg-slate-900 w-full max-w-md mx-auto rounded-2xl shadow-2xl z-50 overflow-y-auto border border-gray-100 dark:border-slate-800">
       <div class="p-8">
-        <h2 class="text-xl font-bold text-gray-900 mb-6">Editar Dados do Aluno</h2>
+        <h2 class="text-xl font-bold text-gray-900 dark:text-white mb-6">Editar Dados do Aluno</h2>
         
         <form id="formEdit" class="space-y-4" onsubmit="return false;">
           <input type="hidden" id="editId">
           <div>
-            <label class="block text-sm font-medium text-gray-700">Nome</label>
-            <input id="editNome" type="text" required oninput="this.value = this.value.toUpperCase()" class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm p-3 focus:outline-none focus:ring-2 focus:ring-indigo-200 border uppercase">
+            <label class="block text-sm font-medium text-gray-700 dark:text-slate-300">Nome</label>
+            <input id="editNome" type="text" required oninput="this.value = this.value.toUpperCase()" class="mt-1 block w-full rounded-lg border-gray-300 dark:border-slate-700 bg-white dark:bg-slate-800 dark:text-white shadow-sm p-3 focus:outline-none focus:ring-2 focus:ring-indigo-200 border uppercase">
           </div>
 
           <div>
-            <label class="block text-sm font-medium text-gray-700">Curso</label>
-            <select id="editCurso" required class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm p-3 focus:outline-none focus:ring-2 focus:ring-indigo-200 bg-white border">
+            <label class="block text-sm font-medium text-gray-700 dark:text-slate-300">Curso</label>
+            <select id="editCurso" required class="mt-1 block w-full rounded-lg border-gray-300 dark:border-slate-700 shadow-sm p-3 focus:outline-none focus:ring-2 focus:ring-indigo-200 bg-white dark:bg-slate-800 dark:text-white border">
             </select>
           </div>
 
           <div>
-            <label class="block text-sm font-medium text-gray-700">Turma</label>
-            <select id="editTurma" required class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm p-3 focus:outline-none focus:ring-2 focus:ring-indigo-200 bg-white border">
+            <label class="block text-sm font-medium text-gray-700 dark:text-slate-300">Turma</label>
+            <select id="editTurma" required class="mt-1 block w-full rounded-lg border-gray-300 dark:border-slate-700 shadow-sm p-3 focus:outline-none focus:ring-2 focus:ring-indigo-200 bg-white dark:bg-slate-800 dark:text-white border">
             </select>
           </div>
 
           <div class="flex gap-2 pt-4">
             <button type="submit" id="saveEditBtn" class="flex-1 bg-indigo-600 text-white rounded-lg px-4 py-2 text-sm font-medium hover:bg-indigo-700">Salvar Alterações</button>
-            <button type="button" id="closeEditModal" class="flex-1 bg-gray-200 text-gray-700 rounded-lg px-4 py-2 text-sm font-medium hover:bg-gray-300">Cancelar</button>
+            <button type="button" id="closeEditModal" class="flex-1 bg-gray-200 dark:bg-slate-700 text-gray-700 dark:text-slate-200 rounded-lg px-4 py-2 text-sm font-medium hover:bg-gray-300 dark:hover:bg-slate-600">Cancelar</button>
           </div>
         </form>
       </div>
@@ -212,6 +252,7 @@
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
     import { getFirestore, collection, getDocs, doc, deleteDoc, updateDoc, query, orderBy, getDoc } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
+    import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyB1wMxVNTcvIyz80arV4YNsKhUZAs7a4Uc",
@@ -223,6 +264,7 @@
     };
 
     const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
     const db = getFirestore(app);
 
     const listaAlunosEl = document.getElementById('listaAlunos');
@@ -237,14 +279,85 @@
     const editCurso = document.getElementById('editCurso');
     const editTurma = document.getElementById('editTurma');
     const exportarBtn = document.getElementById('exportarBtn');
+    const exportarPdfBtn = document.getElementById('exportarPdfBtn');
     const filtroBusca = document.getElementById('filtroBusca');
     const filtroCurso = document.getElementById('filtroCurso');
     const filtroTurma = document.getElementById('filtroTurma');
+    const logoutBtn = document.getElementById('logoutBtn');
     const batchPrintBtn = document.getElementById('batchPrintBtn');
     const batchPrintArea = document.getElementById('batchPrintArea');
+    const themeToggle = document.getElementById('themeToggle');
+
+    // Função para exibir toasts de notificação
+    function showToast(message, type = 'info', duration = 3000) {
+      const toastContainer = document.getElementById('toast-container');
+      if (!toastContainer) {
+        console.error('Toast container not found!');
+        return;
+      }
+
+      const toast = document.createElement('div');
+      toast.className = 'relative flex items-center justify-between w-full max-w-xs p-4 text-gray-900 bg-white rounded-lg shadow dark:text-gray-400 dark:bg-gray-800';
+
+      let icon = '';
+      let bgColor = '';
+      let textColor = '';
+
+      switch (type) {
+        case 'success':
+          icon = `<svg class="w-5 h-5 text-green-500 dark:text-green-400" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20"><path d="M10 .5a9.5 9.5 0 1 0 9.5 9.5A9.51 9.51 0 0 0 10 .5Zm3.707 8.207-4 4a1 1 0 0 1-1.414 0l-2-2a1 1 0 0 1 1.414-1.414L9 10.586l3.293-3.293a1 1 0 0 1 1.414 1.414Z"/></svg>`;
+          bgColor = 'bg-green-100 dark:bg-green-900';
+          textColor = 'text-green-800 dark:text-green-300';
+          break;
+        case 'error':
+          icon = `<svg class="w-5 h-5 text-red-500 dark:text-red-400" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20"><path d="M10 .5a9.5 9.5 0 1 0 9.5 9.5A9.51 9.51 0 0 0 10 .5Zm3.707 11.793a1 1 0 1 1-1.414 1.414L10 11.414l-2.293 2.293a1 1 0 0 1-1.414-1.414L8.586 10 6.293 7.707a1 1 0 0 1 1.414-1.414L10 8.586l2.293-2.293a1 1 0 0 1 1.414 1.414L11.414 10l2.293 2.293Z"/></svg>`;
+          bgColor = 'bg-red-100 dark:bg-red-900';
+          textColor = 'text-red-800 dark:text-red-300';
+          break;
+        case 'info':
+        default:
+          icon = `<svg class="w-5 h-5 text-blue-500 dark:text-blue-400" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20"><path d="M10 .5a9.5 9.5 0 1 0 9.5 9.5A9.51 9.51 0 0 0 10 .5ZM10 15a1 1 0 1 1 0-2 1 1 0 0 1 0 2Zm1-4a1 1 0 0 1-2 0V6a1 1 0 0 1 2 0v5Z"/></svg>`;
+          bgColor = 'bg-blue-100 dark:bg-blue-900';
+          textColor = 'text-blue-800 dark:text-blue-300';
+          break;
+      }
+
+      toast.innerHTML = `
+        <div class="inline-flex items-center justify-center flex-shrink-0 w-8 h-8 ${bgColor} rounded-lg">
+          ${icon}
+          <span class="sr-only">${type} icon</span>
+        </div>
+        <div class="ms-3 text-sm font-normal ${textColor}">${message}</div>
+        <button type="button" class="ms-auto -mx-1.5 -my-1.5 bg-white text-gray-400 hover:text-gray-900 rounded-lg focus:ring-2 focus:ring-gray-300 p-1.5 hover:bg-gray-100 inline-flex items-center justify-center h-8 w-8 dark:text-gray-500 dark:hover:text-white dark:bg-gray-800 dark:hover:bg-gray-700" data-dismiss-target="#toast-success" aria-label="Close">
+            <span class="sr-only">Close</span>
+            <svg class="w-3 h-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 14 14"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 6 6m0 0 6 6M7 7l6-6M7 7l-6 6"/></svg>
+        </button>
+      `;
+
+      toastContainer.appendChild(toast);
+
+      setTimeout(() => {
+        toast.remove();
+      }, duration);
+
+      toast.querySelector('button').addEventListener('click', () => {
+        toast.remove();
+      });
+    }
 
     let alunosCache = [];
     let configCache = { cursosComTurmas: {} };
+
+    // Lógica de Alternar Tema
+    themeToggle.addEventListener('click', () => {
+      if (document.documentElement.classList.contains('dark')) {
+        document.documentElement.classList.remove('dark');
+        localStorage.setItem('theme', 'light');
+      } else {
+        document.documentElement.classList.add('dark');
+        localStorage.setItem('theme', 'dark');
+      }
+    });
 
     // Carregar Configurações
     async function carregarConfig() {
@@ -268,6 +381,21 @@
       });
     }
 
+    // Proteção de rota e Logout
+    onAuthStateChanged(auth, (user) => {
+      if (!user) {
+        window.location.href = 'login.html';
+      }
+    });
+
+    logoutBtn.addEventListener('click', async () => {
+      try {
+        await signOut(auth);
+      } catch (error) {
+        console.error("Erro ao sair:", error);
+      }
+    });
+
     function popularSelect(el, items, placeholder, disabled = false) {
       el.innerHTML = placeholder ? `<option value="">${placeholder}</option>` : '';
       (items || []).forEach(i => {
@@ -288,9 +416,11 @@
         }));
 
         filtrarAlunos();
+ showToast('Alunos carregados com sucesso!', 'success');
       } catch (error) {
         console.error("Erro ao carregar:", error);
         listaAlunosEl.innerHTML = '<tr><td colspan="4" class="px-6 py-8 text-center text-red-500">Erro ao carregar dados.</td></tr>';
+ showToast('Erro ao carregar dados dos alunos.', 'error');
       }
     }
 
@@ -322,12 +452,15 @@
         listaAlunosEl.innerHTML = '';
         const termo = filtroBusca.value.trim();
 
+        const isDark = document.documentElement.classList.contains('dark');
+        const textClass = isDark ? 'text-white' : 'text-gray-900';
+        const subTextClass = isDark ? 'text-slate-400' : 'text-gray-600';
+
         alunos.forEach((aluno) => {
           const id = aluno.id;
 
           let nomeExibicao = aluno.nome;
           if (termo) {
-            // Escapa caracteres especiais de regex e cria uma expressão case-insensitive
             const regex = new RegExp(`(${termo.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
             nomeExibicao = aluno.nome.replace(regex, '<mark class="bg-yellow-200 rounded-sm">$1</mark>');
           }
@@ -335,10 +468,10 @@
           const tr = document.createElement('tr');
           tr.className = 'hover:bg-gray-50 transition';
           tr.innerHTML = `
-            <td class="px-6 py-4 font-medium text-gray-900">${nomeExibicao}</td>
-            <td class="px-6 py-4 text-sm font-mono text-gray-400">${aluno.matricula}</td>
-            <td class="px-6 py-4 text-gray-600">${aluno.curso || '--'}</td>
-            <td class="px-6 py-4 text-gray-600">${aluno.turma || '--'}</td>
+            <td class="px-6 py-4 font-medium ${textClass}">${nomeExibicao}</td>
+            <td class="px-6 py-4 text-sm font-mono ${subTextClass}">${aluno.matricula}</td>
+            <td class="px-6 py-4 ${subTextClass}">${aluno.curso || '--'}</td>
+            <td class="px-6 py-4 ${subTextClass}">${aluno.turma || '--'}</td>
             <td class="px-6 py-4">
               <button class="btn-status px-2 py-1 rounded text-xs font-bold ${aluno.status === 'ativo' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}" data-id="${id}" data-current="${aluno.status}">
                 ${(aluno.status || 'ativo').toUpperCase()}
@@ -386,9 +519,11 @@
             try {
               await deleteDoc(doc(db, "alunos", id));
               carregarAlunos();
+ showToast('Aluno excluído com sucesso!', 'success');
             } catch (error) {
-              alert("Erro ao excluir aluno.");
+ showToast('Erro ao excluir aluno.', 'error');
             }
+ showToast('Aluno excluído com sucesso!', 'success');
           }
         };
       });
@@ -402,7 +537,9 @@
           try {
             await updateDoc(doc(db, "alunos", id), { status: newStatus });
             carregarAlunos();
-          } catch (e) { alert("Erro ao mudar status."); }
+ showToast('Status do aluno atualizado!', 'success');
+          } catch (e) { showToast('Erro ao mudar status.', 'error');
+ }
         };
       });
 
@@ -441,6 +578,7 @@
       new QRCode(container, {
         text: matricula,
         width: 85,
+        colorDark : "#000000",
         height: 85,
         correctLevel: QRCode.CorrectLevel.H
       });
@@ -489,10 +627,9 @@
       try {
         await updateDoc(doc(db, "alunos", id), { nome, curso, turma });
         fecharEditModal();
+ showToast('Alterações salvas com sucesso!', 'success');
         carregarAlunos();
-      } catch (error) {
-        console.error("Erro ao atualizar:", error);
-        alert("Erro ao salvar alterações.");
+      } catch (error) { console.error("Erro ao atualizar:", error); showToast('Erro ao salvar alterações.', 'error');
       } finally {
         saveBtn.disabled = false;
         saveBtn.textContent = "Salvar Alterações";
@@ -500,6 +637,7 @@
     };
 
     downloadQRBtn.onclick = () => {
+ showToast('Carteirinha PDF gerada e baixada!', 'success');
       const container = document.getElementById('modalQRContainer');
       const canvas = container.querySelector('canvas');
       if (!canvas) return;
@@ -519,7 +657,7 @@
       pdf.roundedRect(0, 0, 86, 54, 2, 2);
 
       // Logo (Margem 4mm)
-      pdf.addImage('logo.jpeg', 'JPEG', 4, 4, 24, 24);
+      pdf.addImage('logo.png', 'PNG', 4, 4, 24, 24);
 
       // QR Code (Posicionado à direita: 56mm de X para 26mm de largura)
       pdf.addImage(qrDataUrl, 'PNG', 56, 4, 26, 26);
@@ -562,7 +700,7 @@
       const turmaSel = filtroTurma.value;
       const alunosParaImprimir = alunosCache.filter(a => a.turma === turmaSel && a.status === 'ativo');
       
-      if (alunosParaImprimir.length === 0) return alert("Nenhum aluno ativo nesta turma.");
+      if (alunosParaImprimir.length === 0) return showToast("Nenhum aluno ativo nesta turma.", 'info');
 
       batchPrintArea.innerHTML = "";
       
@@ -571,7 +709,7 @@
         card.className = "cracha-cr80";
         card.innerHTML = `
           <div class="w-[50mm] h-full flex flex-col justify-between overflow-hidden text-left">
-            <img src="logo.jpeg" class="h-[24mm] w-auto object-contain object-left mb-1">
+            <img src="logo.png" class="h-[24mm] w-auto object-contain object-left mb-1">
             <div class="flex flex-col justify-end gap-[2px]">
               <span class="font-bold text-[10px] leading-tight uppercase text-black break-words whitespace-normal line-clamp-2">${aluno.nome}</span>
               <span class="text-[8px] font-bold leading-tight uppercase text-indigo-700 break-words whitespace-normal line-clamp-2">${aluno.curso}</span>
@@ -589,6 +727,7 @@
           text: aluno.matricula,
           width: 85,
           height: 85
+ , colorDark : "#000000"
         });
       }
 
@@ -598,6 +737,45 @@
       }, 500);
     };
 
+    // Exportar lista filtrada para PDF
+    exportarPdfBtn.onclick = () => {
+      const curso = filtroCurso.value || "Todos os Cursos";
+      const turma = filtroTurma.value || "Todas as Turmas";
+      
+      const termo = filtroBusca.value.toUpperCase();
+      const alunosFiltrados = alunosCache.filter(aluno => {
+        const matchTexto = aluno.nome.toUpperCase().includes(termo) || aluno.matricula.includes(termo);
+        const matchCurso = filtroCurso.value === "" || aluno.curso === filtroCurso.value;
+        const matchTurma = filtroTurma.value === "" || aluno.turma === filtroTurma.value;
+        return matchTexto && matchCurso && matchTurma;
+      });
+
+      if (alunosFiltrados.length === 0) return showToast("Nenhum dado para exportar.", "info");
+
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF();
+
+      doc.setFontSize(16);
+      doc.text("CETIPass - Listagem de Alunos", 14, 20);
+      doc.setFontSize(10);
+      doc.text(`Filtro: ${curso} / ${turma}`, 14, 28);
+
+      const body = alunosFiltrados.map(a => [a.nome, a.matricula, a.curso, a.turma, a.status.toUpperCase()]);
+
+      doc.autoTable({
+        startY: 35,
+        head: [['Nome', 'Matrícula', 'Curso', 'Turma', 'Status']],
+        body: body,
+        theme: 'striped',
+        headStyles: { fillColor: [79, 70, 229] },
+        styles: { fontSize: 8 }
+      });
+
+      const date = new Date().toISOString().split('T')[0];
+      doc.save(`LISTA_ALUNOS_${curso}_${turma}_${date}.pdf`);
+      showToast("PDF gerado com sucesso!", "success");
+    };
+
     // Função para exportar a lista para CSV (compatível com Excel)
     async function exportarCSV() {
       try {
@@ -605,7 +783,7 @@
         const snapshot = await getDocs(q);
         
         if (snapshot.empty) {
-          alert("Não há alunos para exportar.");
+ showToast("Não há alunos para exportar.", 'info');
           return;
         }
 
@@ -618,13 +796,13 @@
         const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
         const link = document.createElement("a");
         link.href = URL.createObjectURL(blob);
-        link.setAttribute("download", "lista_alunos_merenda.csv");
+        link.setAttribute("download", "lista_alunos_cetipass.csv");
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
-      } catch (error) {
-        console.error("Erro ao exportar:", error);
-      }
+ showToast('Dados exportados para CSV com sucesso!', 'success');
+      } catch (error) { console.error("Erro ao exportar:", error); showToast('Erro ao exportar dados.', 'error');
+ }
     }
 
     exportarBtn.onclick = exportarCSV;
@@ -633,5 +811,6 @@
     carregarConfig();
     carregarAlunos();
   </script>
+  <div id="toast-container" class="fixed top-4 right-4 z-[9999] space-y-2"></div>
 </body>
 </html>

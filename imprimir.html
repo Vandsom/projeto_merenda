@@ -1,0 +1,238 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>CETIPass — Imprimir Carteiras</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = { darkMode: 'class' }
+    if (localStorage.getItem('theme') === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+  </script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <style>
+    body { -webkit-font-smoothing: antialiased; }
+    .student-card { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+    .student-card:hover { transform: translateY(-4px); }
+    /* Container invisível para geração do QR Code */
+    #qr-buffer { visibility: hidden; position: absolute; left: -9999px; }
+  </style>
+</head>
+<body class="bg-gray-50 dark:bg-slate-950 min-h-screen text-gray-800 dark:text-gray-200 flex flex-col md:flex-row transition-colors duration-300">
+
+  <!-- Menu Lateral -->
+  <aside class="no-print w-full md:w-64 bg-white dark:bg-slate-900 border-r border-gray-200 dark:border-slate-800 flex-shrink-0 flex flex-col h-auto md:h-screen sticky top-0">
+    <div class="p-6 border-b border-gray-100 flex items-center gap-3">
+      <img src="logo.png" alt="Logo" class="h-10 w-auto">
+      <div>
+        <h2 class="font-bold text-gray-900 dark:text-white leading-tight">CETIPass</h2>
+        <p class="text-[10px] text-gray-400 uppercase tracking-widest font-bold">Gestão de Acesso</p>
+      </div>
+    </div>
+    
+    <nav class="flex-1 p-4 space-y-1">
+      <a href="dashboard.html" class="flex items-center gap-3 p-3 rounded-xl text-gray-600 dark:text-slate-400 hover:bg-indigo-50 dark:hover:bg-slate-800 hover:text-indigo-600 transition-all font-medium">Dashboard</a>
+      <a href="leitor.html" class="flex items-center gap-3 p-3 rounded-xl text-gray-600 dark:text-slate-400 hover:bg-indigo-50 dark:hover:bg-slate-800 transition-all font-medium">Leitor QR</a>
+      <a href="listagem.html" class="flex items-center gap-3 p-3 rounded-xl text-gray-600 dark:text-slate-400 hover:bg-indigo-50 dark:hover:bg-slate-800 transition-all font-medium">Listagem</a>
+      <a href="imprimir.html" class="flex items-center gap-3 p-3 rounded-xl bg-indigo-600 text-white shadow-lg shadow-indigo-100 font-medium">
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><path d="M6 9V4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v5"/><rect x="6" y="14" width="12" height="8" rx="2"/></svg>
+        Imprimir Carteiras
+      </a>
+      <a href="admin.html" class="flex items-center gap-3 p-3 rounded-xl text-gray-600 dark:text-slate-400 hover:bg-indigo-50 dark:hover:bg-slate-800 transition-all font-medium">Cadastrar Aluno</a>
+      <button id="logoutBtn" class="w-full flex items-center gap-3 p-3 rounded-xl text-red-500 hover:bg-red-50 transition-all font-medium mt-auto">Sair</button>
+    </nav>
+  </aside>
+
+  <main class="flex-1 p-4 md:p-12 overflow-y-auto">
+    <div class="max-w-5xl mx-auto">
+      <header class="mb-10">
+        <h1 class="text-3xl font-bold text-gray-900 dark:text-white">Impressão de Carteiras</h1>
+        <p class="text-gray-500 mt-2">Gerencie a expedição de documentos físicos para novos alunos.</p>
+      </header>
+
+      <!-- Barra de Pesquisa Moderna -->
+      <div class="relative mb-8 group">
+        <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+          <svg class="h-5 w-5 text-gray-400 group-focus-within:text-indigo-500 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+        </div>
+        <input id="searchInput" type="text" oninput="this.value = this.value.toUpperCase()" class="block w-full pl-12 pr-4 py-4 bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 rounded-2xl shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all uppercase text-sm" placeholder="PESQUISAR POR NOME OU MATRÍCULA PARA IMPRESSÃO AVULSA...">
+      </div>
+
+      <!-- Grid de Resultados -->
+      <div id="resultsGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        <!-- Cards injetados via JS -->
+      </div>
+
+      <!-- Empty State -->
+      <div id="emptyState" class="hidden flex-col items-center justify-center py-20 text-center">
+        <div class="bg-gray-100 dark:bg-slate-800 p-6 rounded-full mb-4">
+          <svg class="w-12 h-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+        </div>
+        <h3 class="text-lg font-bold text-gray-900 dark:text-white">A fila está limpa</h3>
+        <p class="text-gray-500 max-w-xs mx-auto">Nenhum aluno novo cadastrado nos últimos 2 dias ou nada encontrado na sua busca.</p>
+      </div>
+    </div>
+  </main>
+
+  <div id="qr-buffer"></div>
+
+  <script type="module">
+    import { auth, db } from "./firebase-config.js";
+    import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
+    import { collection, query, where, getDocs, getDoc, doc, orderBy, limit, Timestamp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
+
+    const resultsGrid = document.getElementById('resultsGrid');
+    const emptyState = document.getElementById('emptyState');
+    const searchInput = document.getElementById('searchInput');
+    const qrBuffer = document.getElementById('qr-buffer');
+
+    // Proteção de Rota
+    onAuthStateChanged(auth, (user) => {
+      if (!user) window.location.href = 'login.html';
+      else loadRecentStudents();
+    });
+
+    document.getElementById('logoutBtn').onclick = () => signOut(auth);
+
+    // Carregar alunos das últimas 48 horas
+    async function loadRecentStudents() {
+      const fortyEightHoursAgo = new Date(Date.now() - (48 * 60 * 60 * 1000));
+      const q = query(
+        collection(db, "alunos"),
+        where("dataCadastro", ">=", Timestamp.fromDate(fortyEightHoursAgo)),
+        orderBy("dataCadastro", "desc")
+      );
+
+      try {
+        const snap = await getDocs(q);
+        renderStudents(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+      } catch (e) {
+        console.error("Erro ao carregar recentes:", e);
+        // Fallback caso o campo dataCadastro não exista em registros antigos
+        renderStudents([]);
+      }
+    }
+
+    // Busca Ativa
+    let searchTimeout;
+    searchInput.oninput = (e) => {
+      clearTimeout(searchTimeout);
+      const val = e.target.value.trim().toUpperCase();
+      
+      if (!val) {
+        loadRecentStudents();
+        return;
+      }
+
+      searchTimeout = setTimeout(async () => {
+        // Busca por Matrícula (ID)
+        const docRef = doc(db, "alunos", val);
+        const docSnap = await getDoc(docRef);
+        
+        if (docSnap.exists()) {
+          renderStudents([{ id: docSnap.id, ...docSnap.data() }]);
+        } else {
+          // Busca por Nome
+          const q = query(collection(db, "alunos"), where("nome", "==", val), limit(10));
+          const snap = await getDocs(q);
+          renderStudents(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+        }
+      }, 500);
+    };
+
+    function renderStudents(students) {
+      resultsGrid.innerHTML = '';
+      if (students.length === 0) {
+        emptyState.classList.remove('hidden');
+        emptyState.classList.add('flex');
+        return;
+      }
+      emptyState.classList.add('hidden');
+      emptyState.classList.remove('flex');
+
+      students.forEach(student => {
+        const card = document.createElement('div');
+        card.className = "student-card bg-white dark:bg-slate-900 p-6 rounded-2xl shadow-sm border border-gray-100 dark:border-slate-800 flex flex-col h-full";
+        card.innerHTML = `
+          <div class="flex-1">
+            <h4 class="font-bold text-gray-900 dark:text-white uppercase leading-tight line-clamp-2 mb-1">${student.nome}</h4>
+            <p class="text-xs font-semibold text-indigo-600 dark:text-indigo-400 mb-4">${student.curso}</p>
+            <div class="flex justify-between text-[10px] text-gray-400 uppercase tracking-widest font-bold">
+              <span>ID: ${student.matricula}</span>
+              <span>Turma: ${student.turma}</span>
+            </div>
+          </div>
+          <button class="print-btn mt-6 w-full bg-gray-900 dark:bg-indigo-600 hover:bg-black dark:hover:bg-indigo-700 text-white py-3 rounded-xl font-bold text-xs transition-colors flex items-center justify-center gap-2">
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8" rx="2"/></svg>
+            IMPRIMIR CARTEIRA
+          </button>
+        `;
+        card.querySelector('.print-btn').onclick = () => generatePDF(student);
+        resultsGrid.appendChild(card);
+      });
+    }
+
+    async function generatePDF(student) {
+      // Gerar QR Code no buffer
+      qrBuffer.innerHTML = "";
+      const qr = new QRCode(qrBuffer, {
+        text: student.matricula,
+        width: 100,
+        height: 100,
+        correctLevel: QRCode.CorrectLevel.H
+      });
+
+      // Aguardar renderização
+      setTimeout(() => {
+        const canvas = qrBuffer.querySelector('canvas');
+        const qrDataUrl = canvas.toDataURL("image/png");
+
+        const { jsPDF } = window.jspdf;
+        const pdf = new jsPDF({ orientation: 'landscape', unit: 'mm', format: [86, 54] });
+
+        // Borda CR80
+        pdf.setDrawColor(203, 213, 225);
+        pdf.setLineWidth(0.1);
+        pdf.roundedRect(0, 0, 86, 54, 2, 2);
+
+        // Logo e QR
+        pdf.addImage('logo.png', 'PNG', 4, 4, 24, 24);
+        pdf.addImage(qrDataUrl, 'PNG', 56, 4, 26, 26);
+
+        let currentY = 31;
+
+        // Nome
+        pdf.setFont("helvetica", "bold");
+        pdf.setFontSize(10);
+        pdf.setTextColor(0, 0, 0);
+        const nomeLines = pdf.splitTextToSize(student.nome.toUpperCase(), 50);
+        pdf.text(nomeLines, 4, currentY);
+        currentY += (nomeLines.length * 4);
+
+        // Curso
+        pdf.setFontSize(8);
+        pdf.setTextColor(67, 56, 202);
+        const cursoLines = pdf.splitTextToSize(student.curso.toUpperCase(), 50);
+        pdf.text(cursoLines, 4, currentY);
+        currentY += (cursoLines.length * 3.5);
+
+        // Turma e ID
+        pdf.setFont("helvetica", "normal");
+        pdf.setTextColor(31, 41, 55);
+        pdf.text(student.turma.toUpperCase(), 4, currentY);
+        
+        pdf.setFontSize(7);
+        pdf.setTextColor(107, 114, 128);
+        pdf.text("ID: " + student.matricula, 4, currentY + 4.5);
+
+        pdf.save(`CARTEIRINHA_${student.matricula}.pdf`);
+      }, 300);
+    }
+  </script>
+</body>
+</html>
